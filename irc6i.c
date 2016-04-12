@@ -26,7 +26,6 @@ void sockwrite(int sockfd, char msg[512]) {
 
 int main(int argc, char **argv) {
 	int sockfd, portno, n;
-	struct sockaddr_in6 serv_addr;
 	struct hostent *server;
 	char nick_msg[512], user_msg[512];
 
@@ -59,33 +58,67 @@ int main(int argc, char **argv) {
 	sprintf(nick_msg, "NICK %s\r\n", nick);
 	sprintf(user_msg, "USER %s 0 * :%s\r\n", user, real);
 
-	// Create the socket
+	// Try using IPv6 first
+	int ipv6_success = 1;
+	// Create socket
 	sockfd = socket(AF_INET6, SOCK_STREAM, 0);
-	if (sockfd < 0) {
-		error("Error opening socket");
-	}
+	if (sockfd < 0)
+		ipv6_success = 0;
 
-	// Set the fields in serv_addr
 	server = gethostbyname2(serv_port[0], AF_INET6);
-	if (server == NULL) {
-		fprintf(stderr, "Error: no such host\n");
-		return 0;
+	if (server == NULL)
+		ipv6_success = 0;
+
+	// IPv6 failed, try using IPv4
+	if (!ipv6_success) {
+		sockfd = socket(AF_INET, SOCK_STREAM, 0);
+		if (sockfd < 0) {
+			error("Error opening socket");
+		}
+
+		server = gethostbyname(serv_port[0]);
+		if (server == NULL) {
+			fprintf(stderr, "Error: no such host\n");
+			return 0;
+		}
 	}
 	free(serv_port);
 
-	memset((char *) &serv_addr, 0, sizeof(serv_addr));
-	serv_addr.sin6_flowinfo = 0;
-	serv_addr.sin6_family = AF_INET6;
-	memmove(
-		(char *) &serv_addr.sin6_addr.s6_addr,
-		(char *) server->h_addr,
-		server->h_length
-	);
-	serv_addr.sin6_port = htons(portno);
+	// IPv6
+	if (ipv6_success) {
+		struct sockaddr_in6 serv_addr;
+		// Set the fields in serv_addr
+		memset((char *) &serv_addr, 0, sizeof(serv_addr));
+		serv_addr.sin6_flowinfo = 0;
+		serv_addr.sin6_family = AF_INET6;
+		memmove(
+			(char *) &serv_addr.sin6_addr.s6_addr,
+			(char *) server->h_addr,
+			server->h_length
+		);
+		serv_addr.sin6_port = htons(portno);
 
-	// Connect the socket
-	if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
-		error("Error connecting");
+		// Connect the socket
+		if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
+			error("Error connecting");
+	}
+	// IPv4
+	else {
+		struct sockaddr_in serv_addr;
+		// Set the fields in serv_addr
+		memset((char *) &serv_addr, 0, sizeof(serv_addr));
+		serv_addr.sin_family = AF_INET;
+		memmove(
+			(char *) &serv_addr.sin_addr.s_addr,
+			(char *) server->h_addr,
+			server->h_length
+		);
+		serv_addr.sin_port = htons(portno);
+
+		// Connect the socket
+		if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
+			error("Error connecting");
+	}
 
 	// Communicate with the server
 	sockwrite(sockfd, nick_msg);
