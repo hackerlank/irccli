@@ -13,6 +13,11 @@ void error(char *msg) {
 	exit(1);
 }
 
+void usage(char *prog) {
+	fprintf(stderr, "Usage: %s server:port nickname username realname\n", prog);
+	exit(0);
+}
+
 void sockwrite(int sockfd, char msg[512]) {
 	int n = write(sockfd, msg, strlen(msg));
 	if (n < 0)
@@ -25,10 +30,8 @@ int main(int argc, char **argv) {
 	struct hostent *server;
 	char nick_msg[512], user_msg[512];
 
-	if (argc < 5) {
-		fprintf(stderr, "Usage: %s server:port nickname username realname\n", argv[0]);
-		return 0;
-	}
+	if (argc < 5)
+		usage(argv[0]);
 
 	// Split server:port
 	char **serv_port = (char **) calloc(32, sizeof(char *));
@@ -38,12 +41,14 @@ int main(int argc, char **argv) {
 		serv_port[i++] = token;
 	}
 
-	if (i != 2) {
-		fprintf(stderr, "Incorrect server and port.\n\
-Usage: %s server:port nickname username realname\n", argv[0]);
-		return 0;
+	if (i != 2)
+		usage(argv[0]);
+	char *endptr;
+	portno = strtol(serv_port[1], &endptr, 10);
+	if (*endptr) {
+		fprintf(stderr, "Incorrect port.\n");
+		usage(argv[0]);
 	}
-	portno = atoi(serv_port[1]);
 
 	// Assign messages to send to server
 	char *nick = argv[2], *user = argv[3], *real = argv[4];
