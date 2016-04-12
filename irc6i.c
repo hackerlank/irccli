@@ -38,11 +38,11 @@ int main(int argc, char **argv) {
 	char *token;
 	int i = 0;
 	while ( (token = strsep(&argv[1], ":")) ) {
-		if (i > 1) {
-			fprintf(stderr, "Incorrect server and port argument.\n");
-			usage(argv[0]);
-		}
 		serv_port[i++] = token;
+	}
+	if (i != 2) {
+		fprintf(stderr, "Incorrect server and port argument.\n");
+		usage(argv[0]);
 	}
 
 	char *endptr;
