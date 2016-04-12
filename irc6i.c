@@ -34,17 +34,17 @@ int main(int argc, char **argv) {
 		usage(argv[0]);
 
 	// Split server:port
-	char **serv_port = (char **) calloc(32, sizeof(char *));
+	char **serv_port = calloc(2, sizeof(char *));
 	char *token;
 	int i = 0;
 	while ( (token = strsep(&argv[1], ":")) ) {
+		if (i > 1) {
+			fprintf(stderr, "Incorrect server and port argument.\n");
+			usage(argv[0]);
+		}
 		serv_port[i++] = token;
 	}
 
-	if (i != 2) {
-		fprintf(stderr, "Incorrect server and port.\n");
-		usage(argv[0]);
-	}
 	char *endptr;
 	portno = strtol(serv_port[1], &endptr, 10);
 	if (*endptr) {
@@ -71,6 +71,7 @@ int main(int argc, char **argv) {
 		fprintf(stderr, "Error: no such host\n");
 		return 0;
 	}
+	free(serv_port);
 
 	memset((char *) &serv_addr, 0, sizeof(serv_addr));
 	serv_addr.sin6_flowinfo = 0;
