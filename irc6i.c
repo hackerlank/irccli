@@ -14,7 +14,7 @@ void error(char *msg) {
 }
 
 void usage(char *prog) {
-	fprintf(stderr, "Usage: %s server:port nickname username realname\n", prog);
+	fprintf(stderr, "Usage: %s server:port nickname [username] [realname]\n", prog);
 	exit(0);
 }
 
@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
 	struct hostent *server;
 	char nick_msg[512], user_msg[512];
 
-	if (argc < 5)
+	if (argc < 3)
 		usage(argv[0]);
 
 	// Split server:port
@@ -41,8 +41,10 @@ int main(int argc, char **argv) {
 		serv_port[i++] = token;
 	}
 
-	if (i != 2)
+	if (i != 2) {
+		fprintf(stderr, "Incorrect server and port.\n");
 		usage(argv[0]);
+	}
 	char *endptr;
 	portno = strtol(serv_port[1], &endptr, 10);
 	if (*endptr) {
@@ -51,7 +53,9 @@ int main(int argc, char **argv) {
 	}
 
 	// Assign messages to send to server
-	char *nick = argv[2], *user = argv[3], *real = argv[4];
+	char *nick = argv[2];
+	char *user = (argc < 4) ? nick : argv[3];
+	char *real = (argc < 5) ? nick : argv[4];
 	sprintf(nick_msg, "NICK %s\r\n", nick);
 	sprintf(user_msg, "USER %s 0 * :%s\r\n", user, real);
 
