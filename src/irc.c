@@ -69,20 +69,7 @@ int main(int argc, char **argv) {
 	if (server == NULL)
 		ipv6_success = 0;
 
-	// IPv6 failed, try using IPv4
-	if (!ipv6_success) {
-		sockfd = socket(AF_INET, SOCK_STREAM, 0);
-		if (sockfd < 0) {
-			error("Error opening socket");
-		}
-
-		server = gethostbyname(serv_port[0]);
-		if (server == NULL) {
-			fprintf(stderr, "Error: no such host\n");
-			return 0;
-		}
-	}
-	free(serv_port);
+	printf("Using IPv%s\n", (ipv6_success) ? "6" : "4");///////
 
 	// IPv6
 	if (ipv6_success) {
@@ -98,12 +85,39 @@ int main(int argc, char **argv) {
 		);
 		serv_addr.sin6_port = htons(portno);
 
+		printf("Connecting...");///////
+
 		// Connect the socket
-		if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
-			error("Error connecting");
+		if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+			// error("Error connecting");
+			ipv6_success = 0;
+		}
+
+		///////
+		if (ipv6_success == 1)
+			printf("connected!\n");
+		else
+			printf("failed.\n");
+		///////
 	}
-	// IPv4
-	else {
+
+	// IPv6 failed, try using IPv4
+	if (!ipv6_success) {
+		printf("Using IPv4\n");///////
+
+		sockfd = socket(AF_INET, SOCK_STREAM, 0);
+		if (sockfd < 0) {
+			error("Error opening socket");
+		}
+
+		server = gethostbyname(serv_port[0]);
+		if (server == NULL) {
+			fprintf(stderr, "Error: no such host\n");
+			return 0;
+		}
+
+		printf("%s\n", server->h_name); ///////////
+
 		struct sockaddr_in serv_addr;
 		// Set the fields in serv_addr
 		memset((char *) &serv_addr, 0, sizeof(serv_addr));
@@ -119,6 +133,7 @@ int main(int argc, char **argv) {
 		if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
 			error("Error connecting");
 	}
+	free(serv_port);
 
 	// Communicate with the server
 	sockwrite(sockfd, nick_msg);
