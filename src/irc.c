@@ -58,10 +58,11 @@ int irc_parse(char src[512], char ***output) {
 	}
 
 	*output = calloc(pcre_result, sizeof(char *));
+	char *buff;
 	for (int i = 0; i < pcre_result; i++) {
 		pcre_get_substring(src, groups, pcre_result, i, &(group));
 
-		char *buff = malloc(strlen(group)+1);
+		buff = malloc(strlen(group)+1);
 		strncpy(buff, group, strlen(group)+1);
 		(*output)[i] = buff;
 	}
