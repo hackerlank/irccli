@@ -3,7 +3,7 @@ A minimal command line IRC client
 
 ## About
 
-Irccli is a simple command line irc client written from scratch in C.
+Irccli is a simple command line irc client written from scratch in C. It is currently still in development.
 
 ## Compiling
 > _Note: Must have [pcre](http://www.pcre.org/) installed to compile correctly_
