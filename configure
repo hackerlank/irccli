@@ -3,10 +3,10 @@
 echo $'CC=gcc
 CFLAGS=-c -O3' > makefile
 
-ldlibs="" #`pkg-config --libs `
-echo "LDLIBS=$ldlibs -lm" >> makefile
+ldlibs="" #`pkg-config --libs`
+echo "LDLIBS=$ldlibs -lpcre" >> makefile
 
-ldflags="" #`pkg-config --cflags `
+ldflags="" #`pkg-config --cflags`
 echo "LDFLAGS=$ldflags" >> makefile
 
 echo $'EXECUTABLE=irc
