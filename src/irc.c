@@ -37,15 +37,15 @@ int irc_parse(char src[512], char ***output) {
 		return 0;
 	}
 
-    pcre_result = pcre_exec(
-    	compiled,
-        extra,
-        src,
-        strlen(src),     // Length of string
-        0,               // Start looking at this point
-        0,               // OPTIONS
-        groups,
-        size             // Length of subStr
+	pcre_result = pcre_exec(
+		compiled,
+		extra,
+		src,
+		strlen(src),     // Length of string
+		0,               // Start looking at this point
+		0,               // OPTIONS
+		groups,
+		size             // Length of subStr
 	);
 
 	if (pcre_result < 0) {
@@ -59,7 +59,7 @@ int irc_parse(char src[512], char ***output) {
 
 	*output = calloc(pcre_result, sizeof(char *));
 	for (int i = 0; i < pcre_result; i++) {
-        pcre_get_substring(src, groups, pcre_result, i, &(group));
+		pcre_get_substring(src, groups, pcre_result, i, &(group));
 
 		char *buff = malloc(strlen(group)+1);
 		strncpy(buff, group, strlen(group)+1);
