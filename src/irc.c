@@ -4,12 +4,22 @@
 #include <unistd.h>
 #include <pcre.h>
 
+#include <sys/time.h>
+#include <sys/types.h>
+#include <errno.h>
+
+#include <readline/readline.h>
+
 #include "util.h"
 #include "sock_util.h"
 
 void usage(char *prog) {
 	fprintf(stderr, "Usage: %s server:port nickname [username] [realname]\n", prog);
 	exit(0);
+}
+
+void parse_msg(char *line) {
+	printf("INPUTTED: %s\n", line);
 }
 
 int irc_parse(char src[512], char ***output) {
@@ -57,14 +67,13 @@ int irc_parse(char src[512], char ***output) {
 		return 0;
 	}
 
+	free(*output);
 	*output = calloc(pcre_result, sizeof(char *));
-	char *buff;
 	for (int i = 0; i < pcre_result; i++) {
 		pcre_get_substring(src, groups, pcre_result, i, &(group));
 
-		buff = malloc(strlen(group)+1);
-		strncpy(buff, group, strlen(group)+1);
-		(*output)[i] = buff;
+		(*output)[i] = malloc( (strlen(group)+1) * sizeof(char) );
+		strncpy((*output)[i], group, strlen(group)+1);
 	}
 
 	pcre_free_substring(group);
@@ -115,35 +124,110 @@ int main(int argc, char **argv) {
 	sockwrite(sockfd, nick_msg);
 	sockwrite(sockfd, user_msg);
 
-	int n;
-	char buffer[512];
+
+	// Parsing variables
 	char **output;
 	char *prefix, *type, *dest, *msg;
 	char *ping = "PING";
 	char pong[512];
-	int print;
-	while ( (n = read(sockfd, buffer, 511)) > 0 ) {
-		print = 1;
-		if (irc_parse(buffer, &output)) {
-			prefix = output[1];
-			type   = output[2];
-			dest   = output[3];
-			msg    = output[4];
 
-			if (strcmp(type, ping) == 0) {
-				print = 0;
-				memset(pong, 0, 512);
-				sprintf(pong, "PONG :%s", msg);
-				sockwrite(sockfd, pong);
-			}
+	// Output variables
+	int n;
+	char buffer[512];
+	char *buffsave;
+	int buffsavesize = sizeof(buffsave);
+	int print;
+
+	// Select() variables
+	fd_set rfds;
+	struct timeval tv;
+	int retval;
+
+	// Readline() setup
+	const char *prompt = "> ";
+	rl_callback_handler_install(prompt, &parse_msg);
+	while (1) {
+		FD_ZERO(&rfds);
+		FD_SET(0, &rfds); // 0 is stdin
+		FD_SET(sockfd, &rfds);
+
+		retval = select(sockfd+1, &rfds, NULL, NULL, NULL);
+
+		if (retval == -1) {
+			error("Error with select()");
+		}
+		else if (retval) {
+
+		}
+		else {
+			continue;
 		}
 
-		if (print)
-			printf("%s", buffer);
-		memset(buffer, 0, 512);
-	}
-	if (n < 0) {
-		error("Error reading from socket");
+		// Stdin received input
+		if (FD_ISSET(0, &rfds)) {
+			rl_callback_read_char();
+		}
+		// Socket received input
+		if (FD_ISSET(sockfd, &rfds)) {
+			n = read(sockfd, buffer, 512);
+			if (n > 0) {
+				buffer[n] = 0;
+				print = 1;
+				if (irc_parse(buffer, &output)) {
+					prefix = output[1];
+					type   = output[2];
+					dest   = output[3];
+					msg    = output[4];
+
+					if (strcmp(type, ping) == 0) {
+						print = 0;
+						memset(pong, 0, 512);
+						sprintf(pong, "PONG :%s", msg);
+						sockwrite(sockfd, pong);
+					}
+					// else {
+					// 	rl_printf("%s\n", msg);
+					// 	// This doesn't always work because sometimes the
+					// 	// input is mulitple lines; need to fix this later
+					// }
+				}
+
+				if (print) {
+					// Not yet received full line so store in another buffer
+					if (buffer[n - 1] != '\n') {
+						if (buffsavesize > sizeof(char *)) {
+							buffsavesize += (strlen(buffer)+1) * sizeof(char);
+							buffsave = realloc(buffsave, buffsavesize);
+						}
+						else {
+							buffsavesize += (strlen(buffer)+1) * sizeof(char);
+							buffsave = malloc(buffsavesize);
+						}
+						// Add buffer's contents to the saved buffer
+						memmove(buffsave+strlen(buffsave), buffer, strlen(buffer)+1);
+					}
+					// Received full line now, so print saved buffer and
+					// the last part just received
+					else if (buffsavesize > sizeof(char *)) {
+						buffsavesize += (strlen(buffer)+1) * sizeof(char);
+						buffsave = realloc(buffsave, buffsavesize);
+						memmove(buffsave+strlen(buffsave), buffer, strlen(buffer)+1);
+
+						rl_printf("%s", buffsave);
+						free(buffsave);
+						buffsavesize = sizeof(buffsave);
+					}
+					// Received entire line at once
+					else {
+						rl_printf("%s", buffer);
+					}
+				}
+				memset(buffer, 0, 512);
+			}
+			else {
+				error("Error reading from socket");
+			}
+		}
 	}
 
 	// Close the socket

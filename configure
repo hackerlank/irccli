@@ -3,11 +3,11 @@
 echo $'CC=gcc
 CFLAGS=-c -O3' > makefile
 
-ldlibs="" #`pkg-config --libs`
-echo "LDLIBS=$ldlibs -lpcre" >> makefile
+ldlibs="" #`pkg-config --libs `
+echo "LDLIBS=$ldlibs -L/opt/local/lib -L/usr/local/lib -lpcre -lreadline" >> makefile
 
-ldflags="" #`pkg-config --cflags`
-echo "LDFLAGS=$ldflags" >> makefile
+ldflags="" #`pkg-config --cflags `
+echo "LDFLAGS=$ldflags -I/opt/local/include" >> makefile
 
 echo $'EXECUTABLE=irc
 SOURCES=irc.c sock_util.c util.c
