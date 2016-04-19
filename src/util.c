@@ -1,6 +1,10 @@
 #include "util.h"
 
 void error(char *msg) {
+	rl_save_prompt();
+	rl_replace_line("", 0);
+	rl_redisplay();
+	rl_callback_handler_remove();
 	perror(msg);
 	exit(1);
 }

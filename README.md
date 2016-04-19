@@ -14,3 +14,4 @@ Simply run `./configure` and then `make`.
 - Allow the user to send messages
  - Add alias functions the user can type (e.g., join instead of JOIN)
 - Clean up output (using the regular expressions)
+ - Manually loop through the characters in the input read from the socket and split it up by newlines to handle each line separately
