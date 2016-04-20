@@ -14,7 +14,8 @@
 #include "sock_util.h"
 #include "irc.h"
 
-int CONTINUE_LOOP = 1;
+static int CONTINUE_LOOP = 1;
+static int sockfd;
 
 void usage(char *prog) {
 	fprintf(stderr, "Usage: %s server[:port] nickname [username] [realname]\n", prog);
@@ -23,13 +24,15 @@ void usage(char *prog) {
 
 void parse_msg(char *line) {
 	// Quit the program
-	if (!line || strcmp(line, "quit") == 0) {
+	if (!line) {
 		rl_callback_handler_remove();
 		CONTINUE_LOOP = 0;
 	}
 	else {
 		add_history(line);
-		printf("INPUTTED: %s\n", line);
+		char buffer[512];
+		sprintf(buffer, "%s\r\n", line);
+		sockwrite(sockfd, buffer);
 	}
 }
 
@@ -64,7 +67,6 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	int sockfd;
 	connect_socket(&sockfd, serv_port[0], portno);
 	free(serv_port);
 
@@ -84,7 +86,6 @@ int main(int argc, char **argv) {
 	// Parsing variables
 	char **output;
 	char *prefix, *type, *dest, *msg;
-	char *ping = "PING";
 	char pong[512];
 
 	// Output variables
@@ -135,10 +136,10 @@ int main(int argc, char **argv) {
 					dest   = output[3];
 					msg    = output[4];
 
-					if (strcmp(type, ping) == 0) {
+					if (strcmp(type, "PING") == 0) {
 						print = 0;
 						memset(pong, 0, 512);
-						sprintf(pong, "PONG :%s", msg);
+						sprintf(pong, "PONG :%s\r\n", msg);
 						sockwrite(sockfd, pong);
 					}
 					// else {
