@@ -31,7 +31,7 @@ void parse_msg(char *line) {
 	else {
 		add_history(line);
 		char buffer[512];
-		sprintf(buffer, "%s\r\n", line);
+		snprintf(buffer, sizeof(buffer), "%s\r\n", line);
 		sockwrite(sockfd, buffer);
 	}
 }
@@ -75,8 +75,8 @@ int main(int argc, char **argv) {
 	char *nick = argv[2];
 	char *user = (argc < 4) ? nick : argv[3];
 	char *real = (argc < 5) ? nick : argv[4];
-	sprintf(nick_msg, "NICK %s\r\n", nick);
-	sprintf(user_msg, "USER %s 0 * :%s\r\n", user, real);
+	snprintf(nick_msg, sizeof(nick_msg), "NICK %s\r\n", nick);
+	snprintf(user_msg, sizeof(user_msg), "USER %s 0 * :%s\r\n", user, real);
 
 	// Communicate with the server
 	sockwrite(sockfd, nick_msg);
