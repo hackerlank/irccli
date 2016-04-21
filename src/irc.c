@@ -71,9 +71,10 @@ int irc_parse(char src[512], char ***output) {
 	return pcre_result;
 }
 
-void irc_handle(char *buffer) {
+void irc_receive(char *buffer) {
 	char **output;
 	char *prefix, *type, *dest, *middle, *msg;
+	int print = 1;
 
 	if (buffer[strlen(buffer) - 1] == '\n')
 		buffer[strlen(buffer) - 1] = 0;
@@ -87,18 +88,30 @@ void irc_handle(char *buffer) {
 		msg    = (r > 5) ? output[5] : "";
 
 		if (strcmp(type, "PING") == 0) {
+			print = 0;
 			char pong[512];
 			snprintf(pong, sizeof(pong), "PONG :%s\r\n", msg);
 			write_socket(pong);
 		}
-		else if (strlen(middle) > 0) {
-			if (strlen(msg) > 0)
-				rl_printf("%s :%s\n", middle, msg);
-			else
-				rl_printf("%s\n", middle);
-		}
-		else if (strlen(msg) > 0) {
-			rl_printf("%s\n", msg);
+
+		if (print) {
+			time_t rawtime;
+			struct tm * timeinfo;
+
+			time(&rawtime);
+			timeinfo = localtime(&rawtime);
+			char out_time[32];
+			snprintf(out_time, sizeof(out_time), "[%d:%d]", timeinfo->tm_hour, timeinfo->tm_min);
+
+			if (strlen(middle) > 0) {
+				if (strlen(msg) > 0)
+					rl_printf("%s %s :%s\n", out_time, middle, msg);
+				else
+					rl_printf("%s %s\n", out_time, middle);
+			}
+			else if (strlen(msg) > 0) {
+				rl_printf("%s %s\n", out_time, msg);
+			}
 		}
 	}
 	else {
@@ -106,4 +119,10 @@ void irc_handle(char *buffer) {
 		rl_printf("Error parsing message from irc server\n");
 		exit(0);
 	}
+}
+
+void irc_send(char *buffer) {
+	char send[512];
+	snprintf(send, sizeof(send), "%s\r\n", buffer);
+	write_socket(send);
 }

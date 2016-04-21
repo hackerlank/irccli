@@ -21,7 +21,7 @@ void usage(char *prog) {
 	exit(0);
 }
 
-void parse_msg(char *line) {
+void parse_line(char *line) {
 	// Quit the program
 	if (!line) {
 		rl_callback_handler_remove();
@@ -29,9 +29,7 @@ void parse_msg(char *line) {
 	}
 	else {
 		add_history(line);
-		char buffer[512];
-		snprintf(buffer, sizeof(buffer), "%s\r\n", line);
-		write_socket(buffer);
+		irc_send(line);
 	}
 }
 
@@ -96,7 +94,7 @@ int main(int argc, char **argv) {
 	// Readline setup
 	using_history();
 	const char *prompt = "> ";
-	rl_callback_handler_install(prompt, &parse_msg);
+	rl_callback_handler_install(prompt, &parse_line);
 
 	// Main program loop
 	while (CONTINUE_LOOP) {
@@ -145,7 +143,7 @@ int main(int argc, char **argv) {
 				// Handle each line
 				while ( (token = strsep(&buffsave, "\n")) ) {
 					if (strlen(token)) {
-						irc_handle(token);
+						irc_receive(token);
 					}
 				}
 
@@ -159,7 +157,7 @@ int main(int argc, char **argv) {
 				strncpy(buffcpy, buffer, 512);
 				while ( (token = strsep(&buffcpy, "\n")) ) {
 					if (strlen(token)) {
-						irc_handle(token);
+						irc_receive(token);
 					}
 				}
 				free(buffcpy);
