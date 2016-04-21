@@ -162,6 +162,7 @@ int main(int argc, char **argv) {
 						irc_handle(token);
 					}
 				}
+				free(buffcpy);
 			}
 
 			memset(buffer, 0, 512);
