@@ -9,5 +9,6 @@
 
 void error(char *msg);
 void rl_printf(char *fmt, ...);
+void destroy_prompt();
 
 #endif

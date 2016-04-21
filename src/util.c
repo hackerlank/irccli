@@ -1,10 +1,7 @@
 #include "util.h"
 
 void error(char *msg) {
-	rl_save_prompt();
-	rl_replace_line("", 0);
-	rl_redisplay();
-	rl_callback_handler_remove();
+	destroy_prompt();
 	perror(msg);
 	exit(1);
 }
@@ -33,4 +30,11 @@ void rl_printf(char *fmt, ...) {
 		rl_redisplay();
 		free(saved_line);
 	}
+}
+
+void destroy_prompt() {
+	rl_save_prompt();
+	rl_replace_line("", 0);
+	rl_redisplay();
+	rl_callback_handler_remove();
 }

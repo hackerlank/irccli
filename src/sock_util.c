@@ -1,19 +1,32 @@
 #include "sock_util.h"
 
-void sockwrite(int sockfd, char msg[512]) {
+int getsockfd() {
+	return sockfd;
+}
+
+int read_socket(char buffer[512]) {
+	int n = read(sockfd, buffer, 512);
+
+	if (n < 0)
+		error("Error reading from socket");
+
+	return n;
+}
+
+void write_socket(char msg[512]) {
 	int n = write(sockfd, msg, strlen(msg));
 	if (n < 0)
 		error("Error writing to socket");
 }
 
-void connect_socket(int *sockfd, char *server_name, int portno) {
+void connect_socket(char *server_name, int portno) {
 	struct hostent *server;
 
 	// Try using IPv6 first
 	int ipv6_success = 1;
 	// Create socket
-	*sockfd = socket(AF_INET6, SOCK_STREAM, 0);
-	if (*sockfd < 0)
+	sockfd = socket(AF_INET6, SOCK_STREAM, 0);
+	if (sockfd < 0)
 		ipv6_success = 0;
 
 	server = gethostbyname2(server_name, AF_INET6);
@@ -35,15 +48,15 @@ void connect_socket(int *sockfd, char *server_name, int portno) {
 		serv_addr.sin6_port = htons(portno);
 
 		// Connect the socket
-		if (connect(*sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+		if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
 			ipv6_success = 0;
 		}
 	}
 
 	// IPv6 failed, try using IPv4
 	if (!ipv6_success) {
-		*sockfd = socket(AF_INET, SOCK_STREAM, 0);
-		if (*sockfd < 0) {
+		sockfd = socket(AF_INET, SOCK_STREAM, 0);
+		if (sockfd < 0) {
 			error("Error opening socket");
 		}
 
@@ -65,7 +78,11 @@ void connect_socket(int *sockfd, char *server_name, int portno) {
 		serv_addr.sin_port = htons(portno);
 
 		// Connect the socket
-		if (connect(*sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
+		if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
 			error("Error connecting");
 	}
+}
+
+void close_socket() {
+	close(sockfd);
 }

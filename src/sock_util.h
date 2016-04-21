@@ -11,7 +11,13 @@
 
 #include "util.h"
 
-void sockwrite(int sockfd, char msg[512]);
-void connect_socket(int *sockfd, char *server_name, int portno);
+static int sockfd;
+
+int getsockfd();
+
+int read_socket(char buffer[512]);
+void write_socket(char msg[512]);
+void connect_socket(char *server_name, int portno);
+void close_socket();
 
 #endif

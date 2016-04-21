@@ -3,7 +3,8 @@
 int irc_parse(char src[512], char ***output) {
 	// Lovingly used from
 	// https://mybuddymichael.com/writings/a-regular-expression-for-irc-messages.html
-	char *regex = "^(?:[:](\\S+) )?(\\S+)(?: (?!:)(.+?))?(?: [:](.+))?$";
+	// (slightly modified)
+	char *regex = "^(?:[:](\\S+) )?(\\S+)(?: (?!:)(.+?))?(?: (?!:)(.+?))?(?: [:](.+))?$";
 	pcre *compiled;
 	pcre_extra *extra;
 	const char *error;
@@ -15,13 +16,13 @@ int irc_parse(char src[512], char ***output) {
 
 	compiled = pcre_compile(regex, 0, &error, &error_offset, NULL);
 	if (compiled == NULL) {
-		// printf("ERROR: Could not compile '%s': %s\n", regex, error);
+		// rl_printf("ERROR: Could not compile '%s': %s\n", regex, error);
 		return 0;
 	}
 
 	extra = pcre_study(compiled, 0, &error);
-	if(error != NULL) {
-		// printf("ERROR: Could not study '%s': %s\n", regex, error);
+	if (error != NULL) {
+		// rl_printf("ERROR: Could not study '%s': %s\n", regex, error);
 		return 0;
 	}
 
@@ -37,16 +38,23 @@ int irc_parse(char src[512], char ***output) {
 	);
 
 	if (pcre_result < 0) {
-		// printf("ERROR: PCRE failed.\n");
+		// switch(pcre_result) {
+		// 	case PCRE_ERROR_NOMATCH      : rl_printf("String did not match the pattern\n");        break;
+		// 	case PCRE_ERROR_NULL         : rl_printf("Something was null\n");                      break;
+		// 	case PCRE_ERROR_BADOPTION    : rl_printf("A bad option was passed\n");                 break;
+		// 	case PCRE_ERROR_BADMAGIC     : rl_printf("Magic number bad (compiled re corrupt?)\n"); break;
+		// 	case PCRE_ERROR_UNKNOWN_NODE : rl_printf("Something kooky in the compiled re\n");      break;
+		// 	case PCRE_ERROR_NOMEMORY     : rl_printf("Ran out of memory\n");                       break;
+		// 	default                      : rl_printf("Unknown error\n");                           break;
+		// }
 		return 0;
 	}
-	else if(pcre_result == 0) {
-		// printf("ERROR: Too many substrings.\n");
+	else if (pcre_result == 0) {
+		// rl_printf("ERROR: Too many substrings.\n");
 		return 0;
 	}
 
-	free(*output);
-	*output = calloc(pcre_result, sizeof(char *));
+	*output = calloc(pcre_result, 512 * sizeof(char *));
 	for (int i = 0; i < pcre_result; i++) {
 		pcre_get_substring(src, groups, pcre_result, i, &(group));
 
@@ -57,8 +65,45 @@ int irc_parse(char src[512], char ***output) {
 	pcre_free_substring(group);
 	pcre_free(compiled);
 
-	if(extra != NULL)
+	if (extra != NULL)
 		pcre_free(extra);
 
-	return 1;
+	return pcre_result;
+}
+
+void irc_handle(char *buffer) {
+	char **output;
+	char *prefix, *type, *dest, *middle, *msg;
+
+	if (buffer[strlen(buffer) - 1] == '\n')
+		buffer[strlen(buffer) - 1] = 0;
+
+	int r = irc_parse(buffer, &output);
+	if (r > 3) { // Must at least have dest, which is third match
+		prefix = output[1];
+		type   = output[2];
+		dest   = output[3];
+		middle = (r > 4) ? output[4] : "";
+		msg    = (r > 5) ? output[5] : "";
+
+		if (strcmp(type, "PING") == 0) {
+			char pong[512];
+			snprintf(pong, sizeof(pong), "PONG :%s\r\n", msg);
+			write_socket(pong);
+		}
+		else if (strlen(middle) > 0) {
+			if (strlen(msg) > 0)
+				rl_printf("%s :%s\n", middle, msg);
+			else
+				rl_printf("%s\n", middle);
+		}
+		else if (strlen(msg) > 0) {
+			rl_printf("%s\n", msg);
+		}
+	}
+	else {
+		destroy_prompt();
+		rl_printf("Error parsing message from irc server\n");
+		exit(0);
+	}
 }
