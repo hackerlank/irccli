@@ -14,28 +14,30 @@
 #include "sock_util.h"
 #include "irc.h"
 
-static int CONTINUE_LOOP = 1;
+static int loop = 1;
 
 void usage(char *prog) {
-	fprintf(stderr, "Usage: %s server[:port] nickname [username] [realname]\n", prog);
-	exit(0);
+	fprintf(stderr, "Usage: %s <server>[:<port>] <nickname> [<username>] [<realname>]\n", prog);
 }
 
-void parse_line(char *line) {
+void handle_line(char *line) {
 	// Quit the program
 	if (!line) {
 		rl_callback_handler_remove();
-		CONTINUE_LOOP = 0;
+		loop = 0;
 	}
-	else {
+	else if (strcmp(line, "") != 0) {
 		add_history(line);
-		irc_send(line);
+		if (!irc_send(line))
+			loop = 0;
 	}
 }
 
 int main(int argc, char **argv) {
-	if (argc < 3)
+	if (argc < 3) {
 		usage(argv[0]);
+		return 0;
+	}
 
 	// Split server:port
 	char **serv_port = calloc(2, sizeof(char *));
@@ -52,6 +54,8 @@ int main(int argc, char **argv) {
 		else {
 			fprintf(stderr, "Incorrect server and port argument.\n");
 			usage(argv[0]);
+			free(serv_port);
+			return 0;
 		}
 	}
 
@@ -61,23 +65,23 @@ int main(int argc, char **argv) {
 		if (*endptr) {
 			fprintf(stderr, "Incorrect port.\n");
 			usage(argv[0]);
+			free(serv_port);
+			return 0;
 		}
 	}
 
+	// Connect to the server
 	connect_socket(serv_port[0], portno);
+
+	// Free serv_port
 	free(serv_port);
 
-	// Assign messages to send to server
-	char nick_msg[512], user_msg[512];
+	// Communicate with the irc server
 	char *nick = argv[2];
 	char *user = (argc < 4) ? nick : argv[3];
 	char *real = (argc < 5) ? nick : argv[4];
-	snprintf(nick_msg, sizeof(nick_msg), "NICK %s\r\n", nick);
-	snprintf(user_msg, sizeof(user_msg), "USER %s 0 * :%s\r\n", user, real);
-
-	// Communicate with the server
-	write_socket(nick_msg);
-	write_socket(user_msg);
+	irc_nick(nick);
+	irc_user(user, real);
 
 
 	// Output variables
@@ -88,16 +92,15 @@ int main(int argc, char **argv) {
 
 	// Select() variables
 	fd_set fds;
-	struct timeval tv;
 	int retval;
 
 	// Readline setup
 	using_history();
 	const char *prompt = "> ";
-	rl_callback_handler_install(prompt, &parse_line);
+	rl_callback_handler_install(prompt, &handle_line);
 
 	// Main program loop
-	while (CONTINUE_LOOP) {
+	while (loop) {
 		FD_ZERO(&fds);
 		FD_SET(0, &fds); // 0 is stdin
 		FD_SET(getsockfd(), &fds);
@@ -118,52 +121,64 @@ int main(int argc, char **argv) {
 		// Socket received input
 		if (FD_ISSET(getsockfd(), &fds)) {
 			n = read_socket(buffer);
-			buffer[n] = 0;
+			buffer[n] = 0; // Safe because read_socket returns at most 511
 
 			// Received in the middle of a line, so store in another buffer
 			if (buffer[n - 1] != '\n') {
 				if (buffsavesize > sizeof(char *)) {
 					buffsavesize += (strlen(buffer)+1) * sizeof(char);
 					buffsave = realloc(buffsave, buffsavesize);
+
+					// Add buffer's contents to the saved buffer
+					memmove(buffsave+strlen(buffsave), buffer, strlen(buffer)+1);
 				}
 				else {
 					buffsavesize += (strlen(buffer)+1) * sizeof(char);
 					buffsave = malloc(buffsavesize);
+
+					// Add buffer's contents to the saved buffer
+					memmove(buffsave, buffer, strlen(buffer)+1);
 				}
-				// Add buffer's contents to the saved buffer
-				memmove(buffsave+strlen(buffsave), buffer, strlen(buffer)+1);
 			}
 			// Received complete line(s) now, so print saved buffer (first
 			// add the last part just received)
 			else if (buffsavesize > sizeof(char *)) {
 				buffsavesize += (strlen(buffer)+1) * sizeof(char);
-				buffsave = realloc(buffsave, buffsavesize);
+				char *tofree;
+				tofree = buffsave = realloc(buffsave, buffsavesize);
 				memmove(buffsave+strlen(buffsave), buffer, strlen(buffer)+1);
 
 				// Handle each line
 				while ( (token = strsep(&buffsave, "\n")) ) {
 					if (strlen(token)) {
-						irc_receive(token);
+						if (!irc_receive(token)) {
+							loop = 0;
+							break;
+						}
 					}
 				}
 
-				free(buffsave);
+				free(tofree);
 				buffsavesize = sizeof(buffsave);
 			}
 			// Received complete line(s)
 			else {
 				// Handle each line
-				char *buffcpy = malloc(512);
+				char *buffcpy, *tofree;
+				tofree = buffcpy = malloc(512);
 				strncpy(buffcpy, buffer, 512);
 				while ( (token = strsep(&buffcpy, "\n")) ) {
 					if (strlen(token)) {
-						irc_receive(token);
+						if (!irc_receive(token)) {
+							loop = 0;
+							break;
+						}
 					}
 				}
-				free(buffcpy);
+				free(tofree);
 			}
 
-			memset(buffer, 0, 512);
+			memset(buffer, 0, sizeof(buffer));
 		}
 	}
 
@@ -172,8 +187,9 @@ int main(int argc, char **argv) {
 		free(buffsave);
 	}
 
-	// Close the socket
-	close_socket();
+	destroy_prompt(); // Readline cleanup
+	close_socket(); // Close the socket
 
-	return 0;
+	// exit(0);
+	return 0; // Causes abort for some reason
 }

@@ -1,13 +1,31 @@
 #! /bin/bash
 
 echo $'CC=gcc
-CFLAGS=-c -O3' > makefile
+CFLAGS=-c -Wall -O3' > makefile
+
+# For debugging optimized code:
+###############################
+# echo $'CC=gcc
+# CFLAGS=-c -Wall -g -O1' > makefile
+
+# For general debugging (look at variable values):
+###############################
+# echo $'CC=gcc
+# CFLAGS=-c -Wall -g -O0' > makefile
+
 
 ldlibs="" #`pkg-config --libs `
 echo "LDLIBS=$ldlibs -L/opt/local/lib -L/usr/local/lib -lpcre -lreadline" >> makefile
 
+# For debugging with Address Sanitation:
+###############################
+# ldlibs="" #`pkg-config --libs `
+# echo "LDLIBS=$ldlibs -L/opt/local/lib -L/usr/local/lib -lpcre -lreadline -fsanitize=address -fno-omit-frame-pointer" >> makefile
+
+
 ldflags="" #`pkg-config --cflags `
 echo "LDFLAGS=$ldflags -I/opt/local/include" >> makefile
+
 
 echo $'EXECUTABLE=irc
 SOURCES=main.c irc.c sock_util.c util.c

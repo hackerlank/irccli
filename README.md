@@ -11,6 +11,7 @@ Irccli is a simple command line irc client written from scratch in C. It is curr
 Simply run `./configure` and then `make`.
 
 ## Todo
-- Parse and handle user sent messages
- - Add alias functions the user can type (e.g., /join instead of JOIN)
+- Finish implementing user commands
 - Better parse messages received from irc server (i.e., output from commands like PART)
+ - Better parse messages from other users (e.g., "h4x0r: Message")
+- Log other channels' output which the user is connected to, but only print when the user switches to that channel

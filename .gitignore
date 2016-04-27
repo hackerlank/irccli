@@ -2,3 +2,4 @@
 makefile
 irc
 *.o
+irc.dSYM/*
