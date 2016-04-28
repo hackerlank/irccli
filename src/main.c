@@ -190,6 +190,5 @@ int main(int argc, char **argv) {
 	destroy_prompt(); // Readline cleanup
 	close_socket(); // Close the socket
 
-	// exit(0);
-	return 0; // Causes abort for some reason
+	return 0;
 }

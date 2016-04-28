@@ -1,26 +1,26 @@
 #! /bin/bash
 
 echo $'CC=gcc
-CFLAGS=-c -Wall -O3' > makefile
+CFLAGS=-c -Wall -Wextra -O3' > makefile
 
 # For debugging optimized code:
 ###############################
 # echo $'CC=gcc
-# CFLAGS=-c -Wall -g -O1' > makefile
+# CFLAGS=-c -Wall -Wextra -g -O1' > makefile
 
 # For general debugging (look at variable values):
 ###############################
 # echo $'CC=gcc
-# CFLAGS=-c -Wall -g -O0' > makefile
+# CFLAGS=-c -Wall -Wextra -g -O0' > makefile
 
 
 ldlibs="" #`pkg-config --libs `
 echo "LDLIBS=$ldlibs -L/opt/local/lib -L/usr/local/lib -lpcre -lreadline" >> makefile
 
-# For debugging with Address Sanitation:
+# For debugging with address sanitation:
 ###############################
 # ldlibs="" #`pkg-config --libs `
-# echo "LDLIBS=$ldlibs -L/opt/local/lib -L/usr/local/lib -lpcre -lreadline -fsanitize=address -fno-omit-frame-pointer" >> makefile
+# echo "LDLIBS=$ldlibs -L/opt/local/lib -L/usr/local/lib -lpcre -lreadline -fsanitize=address" >> makefile
 
 
 ldflags="" #`pkg-config --cflags `
@@ -28,7 +28,7 @@ echo "LDFLAGS=$ldflags -I/opt/local/include" >> makefile
 
 
 echo $'EXECUTABLE=irc
-SOURCES=main.c irc.c sock_util.c util.c
+SOURCES=main.c irc.c sock_util.c pcre_util.c util.c
 OBJECTS=$(SOURCES:.c=.o)
 VPATH=src
 all: $(SOURCES) $(EXECUTABLE)

@@ -1,13 +1,18 @@
 #ifndef IRC_H
 #define IRC_H
 
-#include <pcre.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
 #include "util.h"
+#include "pcre_util.h"
 #include "sock_util.h"
+
+// Lovingly used from
+// https://mybuddymichael.com/writings/a-regular-expression-for-irc-messages.html
+// (slightly modified)
+static const char *irc_regex = "^(?:[:](\\S+) )?(\\S+)(?: (?!:)(.+?))?(?: (?!:)(.+?))?(?: [:](.+))?$";
 
 // Channels names are strings (beginning with a '&' or '#' character)
 // of length up to 200 characters.
