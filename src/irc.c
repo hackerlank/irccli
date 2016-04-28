@@ -32,6 +32,11 @@ int irc_receive(char *buffer) {
 		middle = (r > 4) ? output[4] : "";
 		msg    = (r > 5) ? output[5] : "";
 
+		// \r will mess up the output
+		if (dest[strlen(dest)-1] == '\r')
+			dest[strlen(dest)-1] = 0;
+
+		// Reply to ping messages to stay connected to server
 		if (strcmp(type, "PING") == 0) {
 			print = 0;
 			char pong[512];
@@ -43,18 +48,35 @@ int irc_receive(char *buffer) {
 			// Color
 		}
 		else if (strcmp(dest, nick) == 0) {
-			// Another color
+			// Another color, but depends on type (message from server or user as private message?)
+			//                                    (number              or         PRIVMSG        ?)
 		}
 		// Channels names are strings (beginning with a '&' or '#' character)
 		// (https://tools.ietf.org/html/rfc1459#section-1.3)
 		else if (dest[0] == '#' || dest[0] == '&') {
 			if (strcmp(dest, current_channel) == 0) {
-				print = 0;
 				// Color for current channel
 			}
 			else {
+				print = 0;
 				// Log the chat (in a file?)
 				// Read from and display that log when user switches /channel <channel>
+			}
+		}
+
+		// All of these are new color
+		if (strcmp(type, "JOIN") == 0) {
+			char temp[512];
+			snprintf(temp, sizeof(temp), "Now talking on %s", dest);
+			msg = temp;
+		}
+		else if (strcmp(type, "PART") == 0) {
+			print = 1;
+			char temp[512];
+			snprintf(temp, sizeof(temp), "Left channel %s", dest);
+			msg = temp;
+			if (strcmp(dest, current_channel) == 0) {
+				memset(current_channel, 0, sizeof(current_channel));
 			}
 		}
 
@@ -163,13 +185,9 @@ Commands available:\n\
 		if (r > 3) {
 			dest = output[3];
 			snprintf(send, sizeof(send), "%s\r\n", buffer);
-			if (strcmp(dest, current_channel) == 0) {
-				memset(current_channel, 0, sizeof(current_channel));
-			}
 		}
 		else {
 			snprintf(send, sizeof(send), "PART %s\r\n", current_channel);
-			memset(current_channel, 0, sizeof(current_channel));
 		}
 		write_socket(send);
 	}
