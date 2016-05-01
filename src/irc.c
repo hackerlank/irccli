@@ -21,6 +21,10 @@ int irc_receive(char *buffer) {
 	int print = 1;
 	int retval = 1;
 
+	char **au_output;
+	char *action_user = 0;
+	char temp[1024];
+
 	if (buffer[strlen(buffer) - 1] == '\n')
 		buffer[strlen(buffer) - 1] = 0;
 
@@ -32,9 +36,7 @@ int irc_receive(char *buffer) {
 		middle = (r > 4) ? output[4] : "";
 		msg    = (r > 5) ? output[5] : "";
 
-		// \r will mess up the output
-		if (dest[strlen(dest)-1] == '\r')
-			dest[strlen(dest)-1] = 0;
+		action_user = re_match(prefix, "^([^!]+)!.+$", &au_output) == 2 ? au_output[1] : "???";
 
 		// Reply to ping messages to stay connected to server
 		if (strcmp(type, "PING") == 0) {
@@ -66,18 +68,31 @@ int irc_receive(char *buffer) {
 
 		// All of these are new color
 		if (strcmp(type, "JOIN") == 0) {
-			char temp[512];
-			snprintf(temp, sizeof(temp), "Now talking on %s", dest);
+			if (strcmp(action_user, nick) == 0)
+				snprintf(temp, sizeof(temp), "Now talking on %s", dest);
+			else
+				snprintf(temp, sizeof(temp), "%s has joined %s", action_user, dest);
 			msg = temp;
 		}
 		else if (strcmp(type, "PART") == 0) {
-			print = 1;
-			char temp[512];
-			snprintf(temp, sizeof(temp), "Left channel %s", dest);
-			msg = temp;
-			if (strcmp(dest, current_channel) == 0) {
-				memset(current_channel, 0, sizeof(current_channel));
+			if (strcmp(action_user, nick) == 0) {
+				snprintf(temp, sizeof(temp), "Left channel %s", dest);
+				if (strcmp(dest, current_channel) == 0)
+					memset(current_channel, 0, sizeof(current_channel));
 			}
+			else {
+				snprintf(temp, sizeof(temp), "%s has left %s", action_user, dest);
+			}
+
+			msg = temp;
+		}
+		else if (strcmp(type, "PRIVMSG") == 0) {
+			snprintf(temp, sizeof(temp), "%s: %s", action_user, msg);
+			msg = temp;
+		}
+		else if (strcmp(type, "QUIT") == 0) {
+			snprintf(temp, sizeof(temp), "%s has quit [%s]", action_user, msg);
+			msg = temp;
 		}
 
 		if (print) {
@@ -112,6 +127,13 @@ int irc_receive(char *buffer) {
 		for (int i = 0; i < r; i++)
 			free(output[i]);
 		free(output);
+	}
+
+	if (action_user && strcmp(action_user, "???") != 0) {
+		// Free au_output
+		for (int i = 0; i < 2; i++)
+			free(au_output[i]);
+		free(au_output);
 	}
 
 	return retval;
@@ -162,7 +184,7 @@ Commands available:\n\
 /msg <user> <message>  Sends a private message to a user\n\
 /names [<channel>]     Lists the users in a specified channel\n\
 /list                  Lists the channels on the server\n\
-/channel <channel>     Changes the current output channel\n\
+/channel <channel>     Switches the current channel\n\
 ");
 	}
 	else if (strcmp(command, "join") == 0) {
