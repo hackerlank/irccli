@@ -187,8 +187,9 @@ int main(int argc, char **argv) {
 		free(buffsave);
 	}
 
+	irc_clean();      // Clean irc variables
 	destroy_prompt(); // Readline cleanup
-	close_socket(); // Close the socket
+	close_socket();   // Close the socket
 
 	return 0;
 }

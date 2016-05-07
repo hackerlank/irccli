@@ -19,11 +19,16 @@ int irc_receive(char *buffer) {
 	char **output;
 	char *prefix, *type, *dest, *middle, *msg;
 	int print = 1;
-	int retval = 1;
+
+	int log = 0;
+	FILE *lp;
+	char lname[512];
 
 	char **au_output;
 	char *action_user = 0;
 	char temp[1024];
+
+	int retval = 1;
 
 	if (buffer[strlen(buffer) - 1] == '\n')
 		buffer[strlen(buffer) - 1] = 0;
@@ -36,7 +41,8 @@ int irc_receive(char *buffer) {
 		middle = (r > 4) ? output[4] : "";
 		msg    = (r > 5) ? output[5] : "";
 
-		action_user = re_match(prefix, "^([^!]+)!.+$", &au_output) == 2 ? au_output[1] : "???";
+		// Else, set to "??" to allow `strcmp(action_user, nick)` to work
+		action_user = re_match(prefix, "^([^!]+)!.+$", &au_output) == 2 ? au_output[1] : "??";
 
 		// Reply to ping messages to stay connected to server
 		if (strcmp(type, "PING") == 0) {
@@ -61,15 +67,25 @@ int irc_receive(char *buffer) {
 			}
 			else {
 				print = 0;
-				// Log the chat (in a file?)
-				// Read from and display that log when user switches /channel <channel>
 			}
+			// Log messages from channel
+			log = 1;
 		}
 
 		// All of these are new color
 		if (strcmp(type, "JOIN") == 0) {
-			if (strcmp(action_user, nick) == 0)
+			if (strcmp(action_user, nick) == 0) {
 				snprintf(temp, sizeof(temp), "Now talking on %s", dest);
+
+				// Add channel to list of channels
+				tofree = channels = csize ? realloc(channels, ++csize * sizeof(char *))
+				                          : malloc(++csize * sizeof(char *));
+
+				char destcpy[256];
+				channels[csize-1] = malloc(sizeof(destcpy));
+				strncpy(destcpy, dest, sizeof(destcpy));
+				memcpy(channels[csize-1], destcpy, sizeof(destcpy));
+			}
 			else
 				snprintf(temp, sizeof(temp), "%s has joined %s", action_user, dest);
 			msg = temp;
@@ -79,6 +95,19 @@ int irc_receive(char *buffer) {
 				snprintf(temp, sizeof(temp), "Left channel %s", dest);
 				if (strcmp(dest, current_channel) == 0)
 					memset(current_channel, 0, sizeof(current_channel));
+
+				// Remove channel from list of channels
+				int mark = -1;
+				for (int i = 0; i < csize; i++) {
+					if (strcmp(channels[i], dest) == 0) {
+						mark = i;
+					}
+					if (mark >= 0)
+						channels[i] = i+1 < csize ? channels[i+1] : 0;
+				}
+
+				free(channels[csize-1]);
+				channels = realloc(channels, --csize * sizeof(char *));
 			}
 			else {
 				snprintf(temp, sizeof(temp), "%s has left %s", action_user, dest);
@@ -95,6 +124,15 @@ int irc_receive(char *buffer) {
 			msg = temp;
 		}
 
+		// Logging
+		if (log) {
+			snprintf(lname, sizeof(lname), ".IRC_%s.log", dest);
+			lp = fopen(lname, "ab+");
+			if (!lp)
+				error("Error opening file for writing");
+		}
+
+		// Printing
 		if (print) {
 			time_t rawtime;
 			struct tm * timeinfo;
@@ -106,13 +144,21 @@ int irc_receive(char *buffer) {
 			snprintf(out_time, sizeof(out_time), "[%02d:%02d]", timeinfo->tm_hour, timeinfo->tm_min);
 
 			if (strlen(middle) > 0) {
-				if (strlen(msg) > 0)
-					rl_printf("%s %s :%s\n", out_time, middle, msg);
-				else
-					rl_printf("%s %s\n", out_time, middle);
+				if (strlen(msg) > 0) {
+					if (log)
+						fprintf(lp, "%s %s :%s\n", out_time, middle, msg);
+					rl_printf(  "%s %s :%s\n", out_time, middle, msg);
+				}
+				else {
+					if (log)
+						fprintf(lp, "%s %s\n", out_time, middle);
+					rl_printf(  "%s %s\n", out_time, middle);
+				}
 			}
 			else if (strlen(msg) > 0) {
-				rl_printf("%s %s\n", out_time, msg);
+				if (log)
+					fprintf(lp, "%s %s\n", out_time, msg);
+				rl_printf(  "%s %s\n", out_time, msg);
 			}
 		}
 	}
@@ -129,11 +175,15 @@ int irc_receive(char *buffer) {
 		free(output);
 	}
 
-	if (action_user && strcmp(action_user, "???") != 0) {
+	if (action_user && strcmp(action_user, "??") != 0) {
 		// Free au_output
 		for (int i = 0; i < 2; i++)
 			free(au_output[i]);
 		free(au_output);
+	}
+
+	if (log) {
+		fclose(lp);
 	}
 
 	return retval;
@@ -175,7 +225,7 @@ int irc_send(char *buffer) {
 
 	if (strcmp(command, "help") == 0) {
 		printf("\
-Commands available:\n\
+Supported commands:\n\
 \n\
 /help                  Shows this help message\n\
 /join <channel>        Joins a channel\n\
@@ -223,7 +273,7 @@ Commands available:\n\
 			printf("No channel joined. Try /join #<channel>\n");
 		}
 		else {
-			r = re_match(buffer, "^(\\S+) (\\S+) (.+)$", &output);
+			r = re_match(buffer, "^(msg) (\\S+) (.+)$", &output);
 
 			if (r == 4) {
 				dest = output[2];
@@ -259,6 +309,37 @@ Commands available:\n\
 		snprintf(send, sizeof(send), "LIST\r\n");
 		write_socket(send);
 	}
+	else if (strcmp(command, "channel") == 0) {
+		if (!csize) {
+			printf("No channel joined. Try /join #<channel>\n");
+		}
+		else {
+			r = re_match(buffer, "^(channel) (\\S+)$", &output);
+
+			if (r == 3) {
+				dest = output[2];
+
+				// Check if in list of channels
+				int conn_to = 0;
+				for (int i = 0; i < csize; i++) {
+					if (strcmp(channels[i], dest) == 0){
+						conn_to = 1;
+						break;
+					}
+				}
+
+				if (conn_to) {
+					printf("SWITCHING TO CHANNEL: %s\n", dest);
+				}
+				else {
+					printf("Not connected to channel: %s\n", dest);
+				}
+			}
+			else {
+				printf("Usage: /channel <channel>, Switches the current channel\n");
+			}
+		}
+	}
 	else {
 		printf("%s :Unknown command\n", command);
 	}
@@ -272,4 +353,11 @@ Commands available:\n\
 	}
 
 	return retval;
+}
+
+void irc_clean() {
+	if (allocd) {
+		for (int i = 0; tofree[i]; i++)
+			free(tofree[i]);
+	}
 }

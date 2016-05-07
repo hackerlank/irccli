@@ -22,11 +22,19 @@ static char nick[512];
 static char user[512];
 static char real[512];
 
+// List of channels currently connected to
+static char **channels;
+static char **tofree;
+static int csize = 0; // Number of channels in channels array
+static int allocd = 0;
+
 void irc_nick();
 void irc_user();
 
 int irc_parse(char src[512], char ***output);
 int irc_receive(char *buffer);
 int irc_send(char *buffer);
+
+void irc_clean();
 
 #endif
