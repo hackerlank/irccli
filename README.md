@@ -12,5 +12,6 @@ Simply run `./configure` and then `make`.
 
 ## Todo
 - Implement `/channel` command
- - Log other channels' output which the user is connected to, but only print when the user switches to that channel
 - Add color support
+- Only print `QUIT` messages for the channel the user quit from (multiple if necessary)
+ - Maybe use structs for each channel and keep an array of users
