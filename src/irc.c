@@ -63,7 +63,7 @@ int irc_receive(char *buffer) {
 
 
 		////////  Check middle for messages about channel  ////////
-		if (strlen(middle) > 0) {
+		if (strcmp(type, "PRIVMSG") == 0 && strlen(middle) > 0) {
 			char *mcpy, *tofree;
 			tofree = mcpy = malloc(strlen(middle)+1);
 			strncpy(mcpy, middle,  strlen(middle)+1);
