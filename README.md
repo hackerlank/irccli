@@ -11,7 +11,7 @@ Irccli is a simple command line irc client written from scratch in C. It is curr
 Simply run `./configure` and then `make`.
 
 ## Todo
-- Implement `/channel` command
 - Add color support
+- Add support for user actions (`user: ACTION lols -> * user lols`)
 - Only print `QUIT` messages for the channel the user quit from (multiple if necessary)
  - Maybe use structs for each channel and keep an array of users

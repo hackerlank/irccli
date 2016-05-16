@@ -110,6 +110,8 @@ int irc_receive(char *buffer) {
 		//         (different colors)
 		if (strcmp(type, "JOIN") == 0) {
 			if (strcmp(action_user, nick) == 0) {
+				printf("%s", xget("smcup")); // Switch to alternate screen buffer
+				alt(1);
 				snprintf(temp, sizeof(temp), "Now talking on %s", dest);
 
 				// Add channel to list of channels
@@ -143,6 +145,9 @@ int irc_receive(char *buffer) {
 
 				free(channels[csize-1]);
 				channels = realloc(channels, --csize * sizeof(char *));
+
+				printf("%s", xget("rmcup")); // Switch back to normal screen
+				alt(0);
 			}
 			else {
 				snprintf(temp, sizeof(temp), "%s has left %s", action_user, dest);
@@ -170,33 +175,28 @@ int irc_receive(char *buffer) {
 
 
 		////////  Printing & logging  ////////
-		if (print) {
-			time_t rawtime;
-			struct tm * timeinfo;
+		time_t rawtime;
+		struct tm * timeinfo;
 
-			time(&rawtime);
-			timeinfo = localtime(&rawtime);
-			char out_time[16];
-			// Color the time?
-			snprintf(out_time, sizeof(out_time), "[%02d:%02d]", timeinfo->tm_hour, timeinfo->tm_min);
+		time(&rawtime);
+		timeinfo = localtime(&rawtime);
+		char out_time[16];
+		// Color the time?
+		snprintf(out_time, sizeof(out_time), "[%02d:%02d]", timeinfo->tm_hour, timeinfo->tm_min);
 
-			if (strlen(middle) > 0) {
-				if (strlen(msg) > 0) {
-					if (log)
-						fprintf(lp, "%s %s :%s\n", out_time, middle, msg);
-					rl_printf(  "%s %s :%s\n", out_time, middle, msg);
-				}
-				else {
-					if (log)
-						fprintf(lp, "%s %s\n", out_time, middle);
-					rl_printf(  "%s %s\n", out_time, middle);
-				}
+		if (strlen(middle) > 0) {
+			if (strlen(msg) > 0) {
+				if (log)   fprintf(lp, "%s %s :%s\n", out_time, middle, msg);
+				if (print) rl_printf(  "%s %s :%s\n", out_time, middle, msg);
 			}
-			else if (strlen(msg) > 0) {
-				if (log)
-					fprintf(lp, "%s %s\n", out_time, msg);
-				rl_printf(  "%s %s\n", out_time, msg);
+			else {
+				if (log)   fprintf(lp, "%s %s\n", out_time, middle);
+				if (print) rl_printf(  "%s %s\n", out_time, middle);
 			}
+		}
+		else if (strlen(msg) > 0) {
+			if (log)   fprintf(lp, "%s %s\n", out_time, msg);
+			if (print) rl_printf(  "%s %s\n", out_time, msg);
 		}
 	}
 	else {
@@ -366,7 +366,29 @@ Supported commands:\n\
 				}
 
 				if (conn_to) {
-					printf("SWITCHING TO CHANNEL: %s\n", dest);////////////////
+					// Switch to alternate screen buffer
+					galt()
+						? printf("%s%s", xget("rmcup"), xget("smcup"))
+						: printf("%s",   xget("smcup"));
+					alt(1);
+
+					memset(current_channel, 0, sizeof(current_channel));
+					strncpy(current_channel, dest, sizeof(current_channel));
+
+					FILE *lp;
+					char lname[512];
+
+					snprintf(lname, sizeof(lname), ".IRC_%s.log", dest);
+					lp = fopen(lname, "rb+");
+					if (!lp)
+						error("Error opening file for reading");
+
+					// Print log file
+					int c;
+					while ((c = getc(lp)) != EOF)
+						putchar(c);
+
+					fclose(lp);
 				}
 				else {
 					printf("Not connected to channel: %s\n", dest);

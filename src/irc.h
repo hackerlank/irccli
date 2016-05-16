@@ -6,6 +6,7 @@
 #include <time.h>
 
 #include "util.h"
+#include "xterm.h"
 #include "pcre_util.h"
 #include "sock_util.h"
 
