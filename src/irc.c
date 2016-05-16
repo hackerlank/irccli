@@ -52,6 +52,7 @@ int irc_receive(char *buffer) {
 		// Else, set to "??" to allow `strcmp(action_user, nick)` to work
 		action_user = re_match(prefix, "^([^!]+)!.+$", &au_output) == 2 ? au_output[1] : "??";
 
+
 		// Reply to ping messages to stay connected to server
 		if (strcmp(type, "PING") == 0) {
 			print = 0;
@@ -60,48 +61,8 @@ int irc_receive(char *buffer) {
 			write_socket(pong);
 		}
 
-		if (strcmp(dest, "*") == 0) {
-			// Color
-		}
-		else if (strcmp(dest, nick) == 0) {
-			// Another color, but depends on type (message from server or user as private message?)
-			//                                    (number              or         PRIVMSG        ?)
-		}
-		// Channels names are strings (beginning with a '&' or '#' character)
-		// (https://tools.ietf.org/html/rfc1459#section-1.3)
-		else if (dest[0] == '#' || dest[0] == '&') {
-			if (strcmp(dest, current_channel) == 0) {
-				// Color for current channel
-			}
-			else {
-				print = 0;
-			}
-			// Log messages from channel
-			log = 1;
-		}
 
-		// Check middle for messages about channel
-		if (strlen(middle) > 0) {
-			char *mcpy, *tofree;
-			tofree = mcpy = malloc(strlen(middle)+1);
-			strncpy(mcpy, middle,  strlen(middle)+1);
-			char *token;
-			while ( (token = strsep(&mcpy, " ")) ) {
-				if (token[0] == '#' || token[0] == '&') {
-					if (strcmp(current_channel, token) == 0) {
-						// Color for current channel
-					}
-					else {
-						print = 0;
-					}
-					// Log messages from channel
-					log = 1;
-				}
-			}
-			free(tofree);
-		}
-
-		// All of these are new color
+		////////  Special action messages  ////////
 		if (strcmp(type, "JOIN") == 0) {
 			if (strcmp(action_user, nick) == 0) {
 				snprintf(temp, sizeof(temp), "Now talking on %s", dest);
@@ -153,7 +114,52 @@ int irc_receive(char *buffer) {
 			msg = temp;
 		}
 
-		// Log setup
+
+		////////  Check middle for messages about channel  ////////
+		if (strlen(middle) > 0) {
+			char *mcpy, *tofree;
+			tofree = mcpy = malloc(strlen(middle)+1);
+			strncpy(mcpy, middle,  strlen(middle)+1);
+			char *token;
+			while ( (token = strsep(&mcpy, " ")) ) {
+				if (token[0] == '#' || token[0] == '&') {
+					if (strcmp(current_channel, token) == 0) {
+						// Color for current channel
+					}
+					else {
+						print = 0;
+					}
+					// Log messages from channel
+					log = 1;
+				}
+			}
+			free(tofree);
+		}
+
+
+		////////  Different colors  ////////
+		if (strcmp(dest, "*") == 0) {
+			// Color
+		}
+		else if (strcmp(dest, nick) == 0) {
+			// Another color, but depends on type (message from server or user as private message?)
+			//                                    (number              or         PRIVMSG        ?)
+		}
+		// Channels names are strings (beginning with a '&' or '#' character)
+		// (https://tools.ietf.org/html/rfc1459#section-1.3)
+		else if (dest[0] == '#' || dest[0] == '&') {
+			if (strcmp(dest, current_channel) == 0) {
+				// Color for current channel
+			}
+			else {
+				print = 0;
+			}
+			// Log messages from channel
+			log = 1;
+		}
+
+
+		////////  Log setup  ////////
 		if (log) {
 			snprintf(lname, sizeof(lname), ".IRC_%s.log", dest);
 			lp = fopen(lname, "ab+");
@@ -161,7 +167,8 @@ int irc_receive(char *buffer) {
 				error("Error opening file for writing");
 		}
 
-		// Printing & logging
+
+		////////  Printing & logging  ////////
 		if (print) {
 			time_t rawtime;
 			struct tm * timeinfo;
@@ -285,7 +292,6 @@ Supported commands:\n\
 	else if (strcmp(command, "part") == 0) {
 		r = re_match(buffer, irc_regex, &output);
 		if (r > 3) {
-			dest = output[3];
 			snprintf(send, sizeof(send), "%s\r\n", buffer);
 		}
 		else {
