@@ -264,6 +264,7 @@ Supported commands:\n\
 /names [<channel>]     Lists the users in a specified channel\n\
 /list                  Lists the channels on the server\n\
 /channel <channel>     Switches the current channel\n\
+/channels              Lists the channels currently connected to\n\
 ");
 	}
 	else if (strcmp(command, "join") == 0) {
@@ -368,6 +369,13 @@ Supported commands:\n\
 				printf("Usage: /channel <channel>, Switches the current channel\n");
 			}
 		}
+	}
+	else if (strcmp(command, "channels") == 0) {
+		printf(
+			csize ? "Connected to:\n" : "No channel joined. Try /join #<channel>\n"
+		);
+		for (int i = 0; i < csize; i++)
+			printf("%s\n", channels[i]);
 	}
 	else {
 		printf("%s :Unknown command\n", command);
