@@ -24,7 +24,7 @@ static char real[512];
 
 // List of channels currently connected to
 static char **channels;
-static char **tofree;
+static char **ctofree;
 static int csize = 0; // Number of channels in channels array
 static int allocd = 0;
 

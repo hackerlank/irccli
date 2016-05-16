@@ -3,5 +3,6 @@ makefile
 irc
 *.o
 irc.dSYM/*
-inspire/*
 .IRC_*log
+inspire/*
+test/*

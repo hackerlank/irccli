@@ -41,6 +41,14 @@ int irc_receive(char *buffer) {
 		middle = (r > 4) ? output[4] : "";
 		msg    = (r > 5) ? output[5] : "";
 
+///////////////////////
+		// rl_printf("prefix: %s\n", prefix);
+		// rl_printf("type: %s\n", type);
+		// rl_printf("dest: %s\n", dest);
+		// rl_printf("middle: %s\n", middle);
+		// rl_printf("msg: %s\n", msg);
+///////////////////////
+
 		// Else, set to "??" to allow `strcmp(action_user, nick)` to work
 		action_user = re_match(prefix, "^([^!]+)!.+$", &au_output) == 2 ? au_output[1] : "??";
 
@@ -72,13 +80,34 @@ int irc_receive(char *buffer) {
 			log = 1;
 		}
 
+		// Check middle for messages about channel
+		if (strlen(middle) > 0) {
+			char *mcpy, *tofree;
+			tofree = mcpy = malloc(strlen(middle)+1);
+			strncpy(mcpy, middle,  strlen(middle)+1);
+			char *token;
+			while ( (token = strsep(&mcpy, " ")) ) {
+				if (token[0] == '#' || token[0] == '&') {
+					if (strcmp(current_channel, token) == 0) {
+						// Color for current channel
+					}
+					else {
+						print = 0;
+					}
+					// Log messages from channel
+					log = 1;
+				}
+			}
+			free(tofree);
+		}
+
 		// All of these are new color
 		if (strcmp(type, "JOIN") == 0) {
 			if (strcmp(action_user, nick) == 0) {
 				snprintf(temp, sizeof(temp), "Now talking on %s", dest);
 
 				// Add channel to list of channels
-				tofree = channels = csize ? realloc(channels, ++csize * sizeof(char *))
+				ctofree = channels = csize ? realloc(channels, ++csize * sizeof(char *))
 				                          : malloc(++csize * sizeof(char *));
 
 				char destcpy[256];
@@ -124,7 +153,7 @@ int irc_receive(char *buffer) {
 			msg = temp;
 		}
 
-		// Logging
+		// Log setup
 		if (log) {
 			snprintf(lname, sizeof(lname), ".IRC_%s.log", dest);
 			lp = fopen(lname, "ab+");
@@ -132,7 +161,7 @@ int irc_receive(char *buffer) {
 				error("Error opening file for writing");
 		}
 
-		// Printing
+		// Printing & logging
 		if (print) {
 			time_t rawtime;
 			struct tm * timeinfo;
@@ -329,7 +358,7 @@ Supported commands:\n\
 				}
 
 				if (conn_to) {
-					printf("SWITCHING TO CHANNEL: %s\n", dest);
+					printf("SWITCHING TO CHANNEL: %s\n", dest);////////////////
 				}
 				else {
 					printf("Not connected to channel: %s\n", dest);
@@ -357,7 +386,7 @@ Supported commands:\n\
 
 void irc_clean() {
 	if (allocd) {
-		for (int i = 0; tofree[i]; i++)
-			free(tofree[i]);
+		for (int i = 0; ctofree[i]; i++)
+			free(ctofree[i]);
 	}
 }
