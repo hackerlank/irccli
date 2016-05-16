@@ -11,6 +11,7 @@ Irccli is a simple command line irc client written from scratch in C. It is curr
 Simply run `./configure` and then `make`.
 
 ## Todo
+- `/list` command no longer printing
 - Log sent messages (messages sent from the user are not printed or logged)
 - Add support for printing all UTF-8 characters (e.g., Chinese characters)
 - Add `/channel` functionality for private messages from different users
