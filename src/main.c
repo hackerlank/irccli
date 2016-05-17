@@ -154,7 +154,7 @@ int main(int argc, char **argv) {
 				// Handle each line
 				while ( (token = strsep(&buffsave, "\n")) ) {
 					if (strlen(token)) {
-						if (!irc_receive(token)) {
+						if (!irc_receive(token, 1)) {
 							loop = 0;
 							break;
 						}
@@ -172,7 +172,7 @@ int main(int argc, char **argv) {
 				strncpy(buffcpy, buffer, 512);
 				while ( (token = strsep(&buffcpy, "\n")) ) {
 					if (strlen(token)) {
-						if (!irc_receive(token)) {
+						if (!irc_receive(token, 1)) {
 							loop = 0;
 							break;
 						}

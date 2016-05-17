@@ -15,7 +15,7 @@ void irc_user(char *_user, char *_real) {
 	write_socket(user_msg);
 }
 
-int irc_receive(char *buffer) {
+int irc_receive(char *buffer, int R) {
 	char **output;
 	char *prefix, *type, *dest, *middle, *msg;
 	int print = 1;
@@ -41,6 +41,8 @@ int irc_receive(char *buffer) {
 		middle = (r > 4) ? output[4] : "";
 		msg    = (r > 5) ? output[5] : "";
 
+///////////////////////
+		// rl_printf("match: %s\n", output[0]);
 ///////////////////////
 		// rl_printf("prefix: %s\n", prefix);
 		// rl_printf("type: %s\n", type);
@@ -186,17 +188,20 @@ int irc_receive(char *buffer) {
 
 		if (strlen(middle) > 0) {
 			if (strlen(msg) > 0) {
-				if (log)   fprintf(lp, "%s %s :%s\n", out_time, middle, msg);
-				if (print) rl_printf(  "%s %s :%s\n", out_time, middle, msg);
+				if (log)   fprintf(lp,   "%s %s :%s\n", out_time, middle, msg);
+				if (print) R ? rl_printf("%s %s :%s\n", out_time, middle, msg)
+					         : printf(   "%s %s :%s\n", out_time, middle, msg);
 			}
 			else {
-				if (log)   fprintf(lp, "%s %s\n", out_time, middle);
-				if (print) rl_printf(  "%s %s\n", out_time, middle);
+				if (log)   fprintf(lp,   "%s %s\n", out_time, middle);
+				if (print) R ? rl_printf("%s %s\n", out_time, middle)
+					         : printf(   "%s %s\n", out_time, middle);
 			}
 		}
 		else if (strlen(msg) > 0) {
-			if (log)   fprintf(lp, "%s %s\n", out_time, msg);
-			if (print) rl_printf(  "%s %s\n", out_time, msg);
+			if (log)   fprintf(lp,   "%s %s\n", out_time, msg);
+			if (print) R ? rl_printf("%s %s\n", out_time, msg)
+				         : printf(   "%s %s\n", out_time, msg);
 		}
 	}
 	else {
@@ -234,6 +239,11 @@ int irc_send(char *buffer) {
 		if (current_channel[0]) {
 			snprintf(send, sizeof(send), "PRIVMSG %s :%s\r\n", current_channel, buffer);
 			write_socket(send);
+
+			// Print the message because the server doesn't send it back
+			memset(send, 0, sizeof(memset));
+			snprintf(send, sizeof(send), ":%s!X PRIVMSG %s :%s\r\n", nick, current_channel, buffer);
+			irc_receive(send, 0);
 		}
 		else {
 			printf("No channel joined. Try /join #<channel>\n");
