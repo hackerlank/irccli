@@ -6,6 +6,6 @@
 
 #include "util.h"
 
-int re_match(char *src, const char *regex, char ***output);
+int re_match(char *src, const char *regex, char ***output, int caseless);
 
 #endif

@@ -33,7 +33,7 @@ int irc_receive(char *buffer, int R) {
 	if (buffer[strlen(buffer) - 1] == '\n')
 		buffer[strlen(buffer) - 1] = 0;
 
-	int r = re_match(buffer, irc_regex, &output);
+	int r = re_match(buffer, irc_regex, &output, 0);
 	if (r > 3) { // Must at least have dest, which is third match
 		prefix = output[1];
 		type   = output[2];
@@ -52,7 +52,7 @@ int irc_receive(char *buffer, int R) {
 ///////////////////////
 
 		// Else, set to "??" to allow `strcmp(action_user, nick)` to work
-		action_user = re_match(prefix, "^([^!]+)!.+$", &au_output) == 2 ? au_output[1] : "??";
+		action_user = re_match(prefix, "^([^!]+)!.+$", &au_output, 0) == 2 ? au_output[1] : "??";
 
 
 		// Reply to ping messages to stay connected to server
@@ -286,7 +286,7 @@ Supported commands:\n\
 ");
 	}
 	else if (strcmp(command, "join") == 0) {
-		r = re_match(buffer, irc_regex, &output);
+		r = re_match(buffer, irc_regex, &output, 0);
 		if (r > 3) {
 			dest = output[3];
 			channel = strsep(&dest, ",");
@@ -301,7 +301,7 @@ Supported commands:\n\
 		write_socket(send);
 	}
 	else if (strcmp(command, "part") == 0) {
-		r = re_match(buffer, irc_regex, &output);
+		r = re_match(buffer, irc_regex, &output, 0);
 		if (r > 3) {
 			snprintf(send, sizeof(send), "%s\r\n", buffer);
 		}
@@ -320,7 +320,7 @@ Supported commands:\n\
 			printf("No channel joined. Try /join #<channel>\n");
 		}
 		else {
-			r = re_match(buffer, "^(msg) (\\S+) (.+)$", &output);
+			r = re_match(buffer, "^(msg) (\\S+) (.+)$", &output, 1);
 
 			if (r == 4) {
 				dest = output[2];
@@ -335,7 +335,7 @@ Supported commands:\n\
 		}
 	}
 	else if (strcmp(command, "names") == 0) {
-		r = re_match(buffer, irc_regex, &output);
+		r = re_match(buffer, irc_regex, &output, 0);
 		if (r > 3) {
 			dest = output[3];
 			channel = strsep(&dest, ",");
@@ -361,7 +361,7 @@ Supported commands:\n\
 			printf("No channel joined. Try /join #<channel>\n");
 		}
 		else {
-			r = re_match(buffer, "^(channel) (\\S+)$", &output);
+			r = re_match(buffer, "^(channel) (\\S+)$", &output, 1);
 
 			if (r == 3) {
 				dest = output[2];

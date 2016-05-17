@@ -1,6 +1,6 @@
 #include "pcre_util.h"
 
-int re_match(char *src, const char *regex, char ***output) {
+int re_match(char *src, const char *regex, char ***output, int caseless) {
 	pcre *compiled;
 	pcre_extra *extra;
 	const char *error;
@@ -10,7 +10,7 @@ int re_match(char *src, const char *regex, char ***output) {
 	int groups[size];
 	const char *group;
 
-	compiled = pcre_compile(regex, 0, &error, &error_offset, NULL);
+	compiled = pcre_compile(regex, caseless ? PCRE_CASELESS : 0, &error, &error_offset, NULL);
 	if (compiled == NULL) {
 		// rl_printf("ERROR: Could not compile '%s': %s\n", regex, error);
 		return 0;
