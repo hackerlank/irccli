@@ -330,26 +330,26 @@ Supported commands:\n\
 /quit                  Closes the connection with the server and quits\n\
 ");
 	}
-	else if (strcmp(command, "join") == 0) {
-		r = re_match(buffer, irc_regex, &output, 0);
-		if (r > 3) {
-			dest = output[3];
-			channel = strsep(&dest, ",");
+	else if (strcmp(command, "join") == 0 || strcmp(command, "j") == 0) {
+		r = re_match(buffer, "^(join|j) (.+)$", &output, 1);
+		if (r == 3) {
+			dest = output[2];
+			snprintf(send, sizeof(send), "JOIN %s\r\n", dest);
+			write_socket(send);
 
+			channel = strsep(&dest, ",");
 			memset(current_channel, 0, sizeof(current_channel));
 			strncpy(current_channel, channel, sizeof(current_channel));
-
-			snprintf(send, sizeof(send), "%s\r\n", buffer);
-			write_socket(send);
 		}
 		else {
 			printf("Usage: /join <channel>, Joins a channel\n");
 		}
 	}
-	else if (strcmp(command, "part") == 0) {
-		r = re_match(buffer, irc_regex, &output, 0);
-		if (r > 3) {
-			snprintf(send, sizeof(send), "%s\r\n", buffer);
+	else if (strcmp(command, "part") == 0 || strcmp(command, "p") == 0) {
+		r = re_match(buffer, "^(part|p) (.+)$", &output, 1);
+		if (r == 3) {
+			dest = output[2];
+			snprintf(send, sizeof(send), "PART %s\r\n", dest);
 			write_socket(send);
 		}
 		else if (current_channel[0]) {
@@ -360,17 +360,17 @@ Supported commands:\n\
 			printf("No channel joined. Try /join #<channel>\n");
 		}
 	}
-	else if (strcmp(command, "quit") == 0) {
+	else if (strcmp(command, "quit") == 0 || strcmp(command, "q") == 0) {
 		snprintf(send, sizeof(send), "QUIT\r\n");
 		write_socket(send);
 		retval = 0;
 	}
-	else if (strcmp(command, "msg") == 0) {
+	else if (strcmp(command, "msg") == 0 || strcmp(command, "m") == 0) {
 		if (!current_channel[0]) {
 			printf("No channel joined. Try /join #<channel>\n");
 		}
 		else {
-			r = re_match(buffer, "^(msg) (\\S+) (.+)$", &output, 1);
+			r = re_match(buffer, "^(msg|m) (\\S+) (.+)$", &output, 1);
 
 			if (r == 4) {
 				dest = output[2];
@@ -429,12 +429,12 @@ Supported commands:\n\
 		snprintf(send, sizeof(send), "LIST\r\n");
 		write_socket(send);
 	}
-	else if (strcmp(command, "channel") == 0) {
+	else if (strcmp(command, "channel") == 0 || strcmp(command, "c") == 0) {
 		if (!csize) {
 			printf("No channel joined. Try /join #<channel>\n");
 		}
 		else {
-			r = re_match(buffer, "^(channel) (\\S+)$", &output, 1);
+			r = re_match(buffer, "^(channel|c) (\\S+)$", &output, 1);
 
 			if (r == 3) {
 				dest = output[2];
