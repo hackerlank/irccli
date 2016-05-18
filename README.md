@@ -15,6 +15,5 @@ Simply run `./configure` and then `make`.
 - Remove the prompt input from being printed after hit enter
 - Add `/channel` functionality for private messages from different users
  - Fix `/msg` functionality (does not print or switch to different "channel" mode)
-- Add support for user actions (`user: ACTION lols -> * user lols`)
 - Only print `QUIT` messages for the channel the user quit from (multiple if necessary)
  - Maybe use structs for each channel and keep an array of users
