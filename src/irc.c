@@ -200,7 +200,7 @@ int irc_receive(char *buffer, int R) {
 					typeno == 353 ||
 					typeno == 366
 				)
-			)) && strlen(middle) > 0
+			)) && *middle
 		) {
 			char *mcpy, *tofree;
 			tofree = mcpy = malloc(strlen(middle)+1);
@@ -260,13 +260,13 @@ int irc_receive(char *buffer, int R) {
 
 		// Color output
 		char *c_time = scolor(out_time, "red");
-		if (strlen(color) > 0) {
-			if (strlen(middle) > 0) middle = scolor(middle, color);
-			if (strlen(msg) > 0)    msg    = scolor(msg,    color);
+		if (*color) {
+			if (*middle) middle = scolor(middle, color);
+			if (*msg)    msg    = scolor(msg,    color);
 		}
 
-		if (strlen(middle) > 0) {
-			if (strlen(msg) > 0) {
+		if (*middle) {
+			if (*msg) {
 				if (log)   fprintf(lp,   "%s %s :%s\n", c_time, middle, msg);
 				if (print) R ? rl_printf("%s %s :%s\n", c_time, middle, msg)
 					         : printf(   "%s %s :%s\n", c_time, middle, msg);
@@ -277,7 +277,7 @@ int irc_receive(char *buffer, int R) {
 					         : printf(   "%s %s\n", c_time, middle);
 			}
 		}
-		else if (strlen(msg) > 0) {
+		else if (*msg) {
 			if (log)   fprintf(lp,   "%s %s\n", c_time, msg);
 			if (print) R ? rl_printf("%s %s\n", c_time, msg)
 				         : printf(   "%s %s\n", c_time, msg);
@@ -285,9 +285,9 @@ int irc_receive(char *buffer, int R) {
 
 		// Free color variables
 		free(c_time);
-		if (strlen(color) > 0) {
-			if (strlen(middle) > 0) free(middle);
-			if (strlen(msg) > 0)    free(msg);
+		if (*color) {
+			if (*middle) free(middle);
+			if (*msg)    free(msg);
 		}
 	}
 	else {
@@ -330,7 +330,7 @@ int irc_send(char *buffer) {
 
 	////////  No command, just send privmsg  ////////
 	if (buffer[0] != '/') {
-		if (current_channel[0]) {
+		if (*current_channel) {
 			snprintf(send, sizeof(send), "PRIVMSG %s :%s\r\n", current_channel, buffer);
 			write_socket(send);
 
@@ -400,7 +400,7 @@ Supported commands:\n\
 			snprintf(send, sizeof(send), "PART %s\r\n", dest);
 			write_socket(send);
 		}
-		else if (current_channel[0]) {
+		else if (*current_channel) {
 			snprintf(send, sizeof(send), "PART %s\r\n", current_channel);
 			write_socket(send);
 		}
@@ -414,7 +414,7 @@ Supported commands:\n\
 		retval = 0;
 	}
 	else if (strcmp(command, "msg") == 0 || strcmp(command, "m") == 0) {
-		if (!current_channel[0]) {
+		if (!*current_channel) {
 			printf("No channel joined. Try /join #<channel>\n");
 		}
 		else {
@@ -433,7 +433,7 @@ Supported commands:\n\
 		}
 	}
 	else if (strcmp(command, "me") == 0) {
-		if (!current_channel[0]) {
+		if (!*current_channel) {
 			printf("No channel joined. Try /join #<channel>\n");
 		}
 		else {
@@ -465,7 +465,7 @@ Supported commands:\n\
 			channel = current_channel;
 		}
 
-		if (channel[0]) {
+		if (*channel) {
 			snprintf(send, sizeof(send), "NAMES %s\r\n", channel);
 			write_socket(send);
 		}
