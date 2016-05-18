@@ -154,7 +154,14 @@ int irc_receive(char *buffer, int R) {
 			color = "red";
 		}
 		else if (strcmp(type, "PRIVMSG") == 0) {
-			snprintf(temp, sizeof(temp), "%s: %s", action_user, msg);
+			// Someone is talking about user
+			if (strstr(msg, nick) != NULL) {
+				char *c_au = scolor(action_user, "red");
+				snprintf(temp, sizeof(temp), "%s: %s", c_au, msg);
+				free(c_au);
+			}
+			else
+				snprintf(temp, sizeof(temp), "%s: %s", action_user, msg);
 			msg = temp;
 		}
 		else if (strcmp(type, "QUIT") == 0) {
