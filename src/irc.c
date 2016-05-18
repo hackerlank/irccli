@@ -19,6 +19,7 @@ int irc_receive(char *buffer, int R) {
 	char **output;
 	char *prefix, *type, *dest, *middle, *msg;
 	int print = 1;
+	const char *color = "";
 
 	int log = 0;
 	FILE *lp;
@@ -182,26 +183,39 @@ int irc_receive(char *buffer, int R) {
 
 		time(&rawtime);
 		timeinfo = localtime(&rawtime);
-		char out_time[16];
-		// Color the time?
+		char out_time[8];
 		snprintf(out_time, sizeof(out_time), "[%02d:%02d]", timeinfo->tm_hour, timeinfo->tm_min);
+
+		// Color output
+		char *c_time = scolor(out_time, "red");
+		if (strlen(color) > 0) {
+			if (strlen(middle) > 0) middle = scolor(middle, color);
+			if (strlen(msg) > 0)    msg    = scolor(msg,    color);
+		}
 
 		if (strlen(middle) > 0) {
 			if (strlen(msg) > 0) {
-				if (log)   fprintf(lp,   "%s %s :%s\n", out_time, middle, msg);
-				if (print) R ? rl_printf("%s %s :%s\n", out_time, middle, msg)
-					         : printf(   "%s %s :%s\n", out_time, middle, msg);
+				if (log)   fprintf(lp,   "%s %s :%s\n", c_time, middle, msg);
+				if (print) R ? rl_printf("%s %s :%s\n", c_time, middle, msg)
+					         : printf(   "%s %s :%s\n", c_time, middle, msg);
 			}
 			else {
-				if (log)   fprintf(lp,   "%s %s\n", out_time, middle);
-				if (print) R ? rl_printf("%s %s\n", out_time, middle)
-					         : printf(   "%s %s\n", out_time, middle);
+				if (log)   fprintf(lp,   "%s %s\n", c_time, middle);
+				if (print) R ? rl_printf("%s %s\n", c_time, middle)
+					         : printf(   "%s %s\n", c_time, middle);
 			}
 		}
 		else if (strlen(msg) > 0) {
-			if (log)   fprintf(lp,   "%s %s\n", out_time, msg);
-			if (print) R ? rl_printf("%s %s\n", out_time, msg)
-				         : printf(   "%s %s\n", out_time, msg);
+			if (log)   fprintf(lp,   "%s %s\n", c_time, msg);
+			if (print) R ? rl_printf("%s %s\n", c_time, msg)
+				         : printf(   "%s %s\n", c_time, msg);
+		}
+
+		// Free color variables
+		free(c_time);
+		if (strlen(color) > 0) {
+			if (strlen(middle) > 0) free(middle);
+			if (strlen(msg) > 0)    free(msg);
 		}
 	}
 	else {

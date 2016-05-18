@@ -38,3 +38,12 @@ void destroy_prompt() {
 	rl_redisplay();
 	rl_callback_handler_remove();
 }
+
+char *scolor(char *str, const char *color) {
+	color = xget(color);
+	const char *reset = xget("reset");
+	int size = strlen(color) + strlen(str) + strlen(reset) + 1;
+	char *result = malloc(size);
+	snprintf(result, size, "%s%s%s", color, str, reset);
+	return result;
+}
