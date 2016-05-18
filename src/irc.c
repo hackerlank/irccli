@@ -157,7 +157,22 @@ int irc_receive(char *buffer, int R) {
 		}
 		else if (strcmp(type, "PRIVMSG") == 0) {
 			if (strcmp(dest, nick) == 0) {
+///////////////////////
+				// rl_printf("prefix: %s\n", prefix);
+				// rl_printf("type: %s\n", type);
+				// rl_printf("dest: %s\n", dest);
+				// rl_printf("middle: %s\n", middle);
+				// rl_printf("msg: %s\n", msg);
+///////////////////////
+				// // // // // // // // // //
+				// // // // // // // // // //
 				// Handle later when fully implement `/msg`
+				// If action_user is in the list of users, it's a privmsg, start new "channel" for
+				//     privmsg with user
+				// Might not be in list of users: e.g., py-ctcp!ctcp@ctcp-scanner.rizon.net
+				// Special cases for nickserv and chanserv??
+				// Change cursor prompt to red to notify user that someone is chatting them
+				// // // // // // // // // //
 			}
 			else {
 				// Someone is talking about user
