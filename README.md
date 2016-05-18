@@ -12,6 +12,7 @@ Simply run `./configure` and then `make`.
 
 ## Todo
 - Add automatic Nickserv with specified password
+- Add `/channel` functionality that if no channel is specified, go to most recent channel
 - Remove the prompt input from being printed after hit enter
 - Add `/channel` functionality for private messages from different users
  - Fix `/msg` functionality (does not print or switch to different "channel" mode)
