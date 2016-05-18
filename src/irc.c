@@ -73,10 +73,7 @@ int irc_receive(char *buffer, int R) {
 			char *token;
 			while ( (token = strsep(&mcpy, " ")) ) {
 				if (token[0] == '#' || token[0] == '&') {
-					if (strcmp(current_channel, token) == 0) {
-						// Color for current channel
-					}
-					else {
+					if (strcmp(dest, current_channel) != 0) {
 						print = 0;
 					}
 					// Log messages from channel
@@ -89,19 +86,15 @@ int irc_receive(char *buffer, int R) {
 
 		////////  Different colors  ////////
 		if (strcmp(dest, "*") == 0) {
-			// Color
+			color = "magenta";
 		}
 		else if (strcmp(dest, nick) == 0) {
-			// Another color, but depends on type (message from server or user as private message?)
-			//                                    (number              or         PRIVMSG        ?)
+			color = "cyan";
 		}
 		// Channels names are strings (beginning with a '&' or '#' character)
 		// (https://tools.ietf.org/html/rfc1459#section-1.3)
 		else if (dest[0] == '#' || dest[0] == '&') {
-			if (strcmp(dest, current_channel) == 0) {
-				// Color for current channel
-			}
-			else {
+			if (strcmp(dest, current_channel) != 0) {
 				print = 0;
 			}
 			// Log messages from channel
@@ -129,6 +122,7 @@ int irc_receive(char *buffer, int R) {
 			else
 				snprintf(temp, sizeof(temp), "%s has joined %s", action_user, dest);
 			msg = temp;
+			color = "green";
 		}
 		else if (strcmp(type, "PART") == 0) {
 			if (strcmp(action_user, nick) == 0) {
@@ -157,6 +151,7 @@ int irc_receive(char *buffer, int R) {
 			}
 
 			msg = temp;
+			color = "red";
 		}
 		else if (strcmp(type, "PRIVMSG") == 0) {
 			snprintf(temp, sizeof(temp), "%s: %s", action_user, msg);
@@ -165,6 +160,7 @@ int irc_receive(char *buffer, int R) {
 		else if (strcmp(type, "QUIT") == 0) {
 			snprintf(temp, sizeof(temp), "%s has quit [%s]", action_user, msg);
 			msg = temp;
+			color = "red";
 		}
 
 

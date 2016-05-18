@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
 
 	// Readline setup
 	using_history();
-	const char *prompt = "> ";
+	const char *prompt = scolor("> ", "blue");
 	rl_callback_handler_install(prompt, &handle_line);
 
 	// Main program loop
