@@ -237,7 +237,7 @@ int irc_receive(char *buffer, int R) {
 			free(tofree);
 		}
 		else if (strcmp(type, "NOTICE") == 0) {
-			_r = re_match(msg, "^.*?\\[((?:#|&).+)\\].*?$", &_output, 0);
+			_r = re_match(msg, "^.*?\\[([#&].+)\\].*?$", &_output, 0);
 			if (_r == 2) {
 				char *token = _output[1];
 				if (strcmp(token, current_channel) != 0) {
@@ -381,7 +381,7 @@ int irc_send(char *buffer) {
 
 
 	////////  Command parsing  ////////
-	if (strcmp(command, "help") == 0) {
+	if (strcmp(command, "help") == 0 || strcmp(command, "h") == 0) {
 		printf("\
 Supported commands:\n\
 \n\
@@ -395,6 +395,14 @@ Supported commands:\n\
 /names [<channel>]     Lists the users in a specified channel\n\
 /part [<channel>]      Leaves a specified channel\n\
 /quit                  Closes the connection with the server and quits\n\
+\n\
+Shortcuts:\n\
+/(c)hannel\n\
+/(h)elp\n\
+/(j)oin\n\
+/(m)sg\n\
+/(p)art\n\
+/(q)uit\n\
 ");
 	}
 	else if (strcmp(command, "join") == 0 || strcmp(command, "j") == 0) {
