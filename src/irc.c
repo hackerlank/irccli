@@ -338,12 +338,13 @@ Supported commands:\n\
 
 			memset(current_channel, 0, sizeof(current_channel));
 			strncpy(current_channel, channel, sizeof(current_channel));
+
+			snprintf(send, sizeof(send), "%s\r\n", buffer);
+			write_socket(send);
 		}
 		else {
 			printf("Usage: /join <channel>, Joins a channel\n");
 		}
-		snprintf(send, sizeof(send), "%s\r\n", buffer);
-		write_socket(send);
 	}
 	else if (strcmp(command, "part") == 0) {
 		r = re_match(buffer, irc_regex, &output, 0);
