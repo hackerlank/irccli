@@ -67,13 +67,6 @@ int irc_receive(char *buffer, int R) {
 		// Check if type is a number
 		char *typenoptr;
 		int typeno = strtol(type, &typenoptr, 10);
-//////////////////
-		// if (!*typenoptr) {
-		// 	rl_printf(">>>>>>>>>>typeno: %d\n", typeno);
-		// 	rl_printf(">>>>>>>>>>typeno == 353: %s\n", typeno == 353 ? "TRUE" : "FALSE");
-		// 	rl_printf(">>>>>>>>>>typeno == 366: %s\n", typeno == 366 ? "TRUE" : "FALSE");
-		// }
-//////////////////
 
 
 		// Reply to ping messages to stay connected to server
@@ -217,9 +210,6 @@ int irc_receive(char *buffer, int R) {
 				if (token[0] == '#' || token[0] == '&') {
 					if (strcmp(token, current_channel) != 0) {
 						print = 0;
-						// rl_printf(">>>dest: %s\n", dest);//////////////////////////////////////////
-						// rl_printf(">>>token: %s\n", token);//////////////////////////////////////////
-						// rl_printf(">>>dest: %s\n", dest);//////////////////////////////////////////
 					}
 					dsize = strlen(token)+1;
 					dfree = dest = malloc(dsize);
@@ -232,12 +222,9 @@ int irc_receive(char *buffer, int R) {
 			free(tofree);
 		}
 		else if (strcmp(type, "NOTICE") == 0) {
-			// rl_printf("FOUND>>>\n");///////////////////////
 			_r = re_match(msg, "^.*?\\[((?:#|&).+)\\].*?$", &_output, 0);
 			if (_r == 2) {
-				// rl_printf("MATCH>>>\n");///////////////////////
 				char *token = _output[1];
-				// rl_printf("token: %s\n", token);///////////////////////
 				if (strcmp(token, current_channel) != 0) {
 					print = 0;
 				}
@@ -252,10 +239,8 @@ int irc_receive(char *buffer, int R) {
 
 		////////  Log setup  ////////
 		if (log) {
-			// rl_printf(">>>DEST: %s\n", dest);/////////////////
 			uint32_t hash = adler32(dest, strlen(dest));
 			snprintf(lname, sizeof(lname), ".IRC_%u.log", hash);
-			// rl_printf(">>>FILENAME: %s\n", lname);/////////////////
 			lp = fopen(lname, "ab+");
 			if (!lp)
 				error("Error opening file for writing");
@@ -524,10 +509,8 @@ Supported commands:\n\
 					FILE *lp;
 					char lname[512];
 
-					// rl_printf(">>>DEST: %s\n", dest);/////////////////
 					uint32_t hash = adler32(dest, strlen(dest));
 					snprintf(lname, sizeof(lname), ".IRC_%u.log", hash);
-					// rl_printf(">>>FILENAME: %s\n", lname);/////////////////
 					lp = fopen(lname, "rb+");
 					if (!lp)
 						error("Error opening file for reading");
