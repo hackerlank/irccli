@@ -160,13 +160,35 @@ int irc_receive(char *buffer, int R) {
 		}
 		else if (strcmp(type, "PRIVMSG") == 0) {
 			// Someone is talking about user
-			if (strstr(msg, nick) != NULL) {
-				char *c_au = scolor(action_user, "red");
-				snprintf(temp, sizeof(temp), "%s: %s", c_au, msg);
-				free(c_au);
+			if (strstr(msg, nick) != NULL)
+				action_user = scolor(action_user, "red");
+
+			//// Display action messages
+			int psize = strlen(msg)+1;
+			char pattern[psize];
+			snprintf(pattern, psize, "^%cACTION (.+)%c$", '\1', '\1');
+			char **_output;
+			int _r = 0;
+
+			_r = re_match(msg, pattern, &_output, 0);
+			if (_r == 2) {
+				msg = _output[1];
+				snprintf(temp, sizeof(temp), "* %s %s", action_user, msg);
 			}
-			else
+			else {
 				snprintf(temp, sizeof(temp), "%s: %s", action_user, msg);
+			}
+
+			if (_r > 0) {
+				// Free output
+				for (int i = 0; i < _r; i++)
+					free(_output[i]);
+				free(_output);
+			}
+
+			if (strstr(msg, nick) != NULL)
+				free(action_user);
+
 			msg = temp;
 		}
 		else if (strcmp(type, "QUIT") == 0) {
@@ -301,6 +323,7 @@ Supported commands:\n\
 /part [<channel>]      Leaves a specified channel\n\
 /quit                  Closes the connection with the server and quits\n\
 /msg <user> <message>  Sends a private message to a user\n\
+/me <action>           Sends the action to the current channel\n\
 /names [<channel>]     Lists the users in a specified channel\n\
 /list                  Lists the channels on the server\n\
 /channel <channel>     Switches the current channel\n\
@@ -353,6 +376,29 @@ Supported commands:\n\
 			}
 			else {
 				printf("Usage: /msg <user> <message>, Sends a private message to a user\n");
+			}
+		}
+	}
+	else if (strcmp(command, "me") == 0) {
+		if (!current_channel[0]) {
+			printf("No channel joined. Try /join #<channel>\n");
+		}
+		else {
+			r = re_match(buffer, "^(me) (.+)$", &output, 1);
+
+			if (r == 3) {
+				msg  = output[2];
+
+				snprintf(send, sizeof(send), "PRIVMSG %s :%cACTION %s%c\r\n", current_channel, '\1', msg, '\1');
+				write_socket(send);
+
+				// Print the message because the server doesn't send it back
+				memset(send, 0, sizeof(memset));
+				snprintf(send, sizeof(send), ":%s!X PRIVMSG %s :%cACTION %s%c\r\n", nick, current_channel, '\1', msg, '\1');
+				irc_receive(send, 0);
+			}
+			else {
+				printf("Usage: /me <action>, Sends the action to the current channel\n");
 			}
 		}
 	}
