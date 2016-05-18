@@ -164,13 +164,9 @@ int irc_receive(char *buffer, int R) {
 				action_user = scolor(action_user, "red");
 
 			//// Display action messages
-			int psize = strlen(msg)+1;
-			char pattern[psize];
-			snprintf(pattern, psize, "^%cACTION (.+)%c$", '\1', '\1');
 			char **_output;
 			int _r = 0;
-
-			_r = re_match(msg, pattern, &_output, 0);
+			_r = re_match(msg, "^\1ACTION (.+)\1$", &_output, 0);
 			if (_r == 2) {
 				msg = _output[1];
 				snprintf(temp, sizeof(temp), "* %s %s", action_user, msg);
@@ -394,12 +390,12 @@ Supported commands:\n\
 			if (r == 3) {
 				msg  = output[2];
 
-				snprintf(send, sizeof(send), "PRIVMSG %s :%cACTION %s%c\r\n", current_channel, '\1', msg, '\1');
+				snprintf(send, sizeof(send), "PRIVMSG %s :\1ACTION %s\1\r\n", current_channel, msg);
 				write_socket(send);
 
 				// Print the message because the server doesn't send it back
 				memset(send, 0, sizeof(memset));
-				snprintf(send, sizeof(send), ":%s!X PRIVMSG %s :%cACTION %s%c\r\n", nick, current_channel, '\1', msg, '\1');
+				snprintf(send, sizeof(send), ":%s!X PRIVMSG %s :\1ACTION %s\1\r\n", nick, current_channel, msg);
 				irc_receive(send, 0);
 			}
 			else {
