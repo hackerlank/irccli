@@ -14,5 +14,6 @@ void rl_printf(char *fmt, ...);
 void destroy_prompt();
 
 char *scolor(char *str, const char *color);
+uint32_t adler32(const void *buf, size_t buflength);
 
 #endif

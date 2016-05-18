@@ -27,7 +27,7 @@ void handle_line(char *line) {
 		rl_callback_handler_remove();
 		loop = 0;
 	}
-	else if (strcmp(line, "") != 0) {
+	else if (strcmp(line, "") != 0) { ///////////////////////// *line
 		add_history(line);
 		if (!irc_send(line))
 			loop = 0;

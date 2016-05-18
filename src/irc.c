@@ -21,6 +21,10 @@ int irc_receive(char *buffer, int R) {
 	int print = 1;
 	const char *color = "";
 
+	// More re_match
+	char **_output;
+	int _r = 0;
+
 	int log = 0;
 	FILE *lp;
 	char lname[512];
@@ -60,6 +64,17 @@ int irc_receive(char *buffer, int R) {
 			au_address  = au_output[2];
 		}
 
+		// Check if type is a number
+		char *typenoptr;
+		int typeno = strtol(type, &typenoptr, 10);
+//////////////////
+		// if (!*typenoptr) {
+		// 	rl_printf(">>>>>>>>>>typeno: %d\n", typeno);
+		// 	rl_printf(">>>>>>>>>>typeno == 353: %s\n", typeno == 353 ? "TRUE" : "FALSE");
+		// 	rl_printf(">>>>>>>>>>typeno == 366: %s\n", typeno == 366 ? "TRUE" : "FALSE");
+		// }
+//////////////////
+
 
 		// Reply to ping messages to stay connected to server
 		if (strcmp(type, "PING") == 0) {
@@ -70,27 +85,8 @@ int irc_receive(char *buffer, int R) {
 		}
 
 
-		////////  Check middle for messages about channel  ////////
-		if (strcmp(type, "PRIVMSG") == 0 && strlen(middle) > 0) {
-			char *mcpy, *tofree;
-			tofree = mcpy = malloc(strlen(middle)+1);
-			strncpy(mcpy, middle,  strlen(middle)+1);
-			char *token;
-			while ( (token = strsep(&mcpy, " ")) ) {
-				if (token[0] == '#' || token[0] == '&') {
-					if (strcmp(dest, current_channel) != 0) {
-						print = 0;
-					}
-					// Log messages from channel
-					log = 1;
-				}
-			}
-			free(tofree);
-		}
-
-
 		////////  Different colors  ////////
-		if (strcmp(dest, "*") == 0) {
+		if (strcmp(dest, "*") == 0 || strcmp(dest, "AUTH") == 0) {
 			color = "magenta";
 		}
 		else if (strcmp(dest, nick) == 0) {
@@ -113,7 +109,12 @@ int irc_receive(char *buffer, int R) {
 			if (strcmp(action_user, nick) == 0) {
 				printf("%s", xget("smcup")); // Switch to alternate screen buffer
 				alt(1);
+				if (!*dest) dest = msg; // Some servers use msg instead of dest
 				snprintf(temp, sizeof(temp), "Now talking on %s", dest);
+
+				// Set current channel
+				memset(current_channel, 0, sizeof(current_channel));
+				strncpy(current_channel, dest, sizeof(current_channel));
 
 				// Add channel to list of channels
 				ctofree = channels = csize ? realloc(channels, ++csize * sizeof(char *))
@@ -127,9 +128,11 @@ int irc_receive(char *buffer, int R) {
 			else
 				snprintf(temp, sizeof(temp), "%s [%s] has joined %s", action_user, au_address, dest);
 			msg = temp;
+			log = 1;
 			color = "green";
 		}
 		else if (strcmp(type, "PART") == 0) {
+			if (!*dest) dest = msg; // Some servers use msg instead of dest
 			if (strcmp(action_user, nick) == 0) {
 				snprintf(temp, sizeof(temp), "Left channel %s", dest);
 				if (strcmp(dest, current_channel) == 0)
@@ -156,51 +159,109 @@ int irc_receive(char *buffer, int R) {
 			}
 
 			msg = temp;
+			log = 1;
 			color = "red";
 		}
 		else if (strcmp(type, "PRIVMSG") == 0) {
-			// Someone is talking about user
-			if (strstr(msg, nick) != NULL)
-				action_user = scolor(action_user, "red");
-
-			//// Display action messages
-			char **_output;
-			int _r = 0;
-			_r = re_match(msg, "^\1ACTION (.+)\1$", &_output, 0);
-			if (_r == 2) {
-				msg = _output[1];
-				snprintf(temp, sizeof(temp), "* %s %s", action_user, msg);
+			if (strcmp(dest, nick) == 0) {
+				// Handle later when fully implement `/msg`
 			}
 			else {
-				snprintf(temp, sizeof(temp), "%s: %s", action_user, msg);
+				// Someone is talking about user
+				if (strstr(msg, nick) != NULL)
+					action_user = scolor(action_user, "red");
+
+				//// Display action messages
+				_r = re_match(msg, "^\1ACTION (.+)\1$", &_output, 0);
+				if (_r == 2) {
+					msg = _output[1];
+					snprintf(temp, sizeof(temp), "* %s %s", action_user, msg);
+				}
+				else {
+					snprintf(temp, sizeof(temp), "%s: %s", action_user, msg);
+				}
+
+				if (strstr(msg, nick) != NULL)
+					free(action_user);
+
+				log = 1;
+				msg = temp;
 			}
-
-			if (_r > 0) {
-				// Free output
-				for (int i = 0; i < _r; i++)
-					free(_output[i]);
-				free(_output);
-			}
-
-			if (strstr(msg, nick) != NULL)
-				free(action_user);
-
-			msg = temp;
 		}
 		else if (strcmp(type, "QUIT") == 0) {
 			snprintf(temp, sizeof(temp), "%s [%s] has quit [%s]", action_user, au_address, msg);
 			msg = temp;
+			log = 1;
 			color = "red";
+		}
+
+
+		////////  Check middle for messages about channel  ////////
+		char *dfree;
+		int dsize = 0;
+		if (
+			(strcmp(type, "PRIVMSG") == 0 || (
+				!*typenoptr && (
+					typeno == 331 ||
+					typeno == 332 ||
+					typeno == 353 ||
+					typeno == 366
+				)
+			)) && strlen(middle) > 0
+		) {
+			char *mcpy, *tofree;
+			tofree = mcpy = malloc(strlen(middle)+1);
+			strncpy(mcpy, middle,  strlen(middle)+1);
+			char *token;
+			while ( (token = strsep(&mcpy, " ")) ) {
+				if (token[0] == '#' || token[0] == '&') {
+					if (strcmp(token, current_channel) != 0) {
+						print = 0;
+						// rl_printf(">>>dest: %s\n", dest);//////////////////////////////////////////
+						// rl_printf(">>>token: %s\n", token);//////////////////////////////////////////
+						// rl_printf(">>>dest: %s\n", dest);//////////////////////////////////////////
+					}
+					dsize = strlen(token)+1;
+					dfree = dest = malloc(dsize);
+					strncpy(dest, token, dsize);
+					// Log messages from channel
+					log = 1;
+					break;
+				}
+			}
+			free(tofree);
+		}
+		else if (strcmp(type, "NOTICE") == 0) {
+			// rl_printf("FOUND>>>\n");///////////////////////
+			_r = re_match(msg, "^.*?\\[((?:#|&).+)\\].*?$", &_output, 0);
+			if (_r == 2) {
+				// rl_printf("MATCH>>>\n");///////////////////////
+				char *token = _output[1];
+				// rl_printf("token: %s\n", token);///////////////////////
+				if (strcmp(token, current_channel) != 0) {
+					print = 0;
+				}
+				dsize = strlen(token)+1;
+				dfree = dest = malloc(dsize);
+				strncpy(dest, token, dsize);
+				// Log messages from channel
+				log = 1;
+			}
 		}
 
 
 		////////  Log setup  ////////
 		if (log) {
-			snprintf(lname, sizeof(lname), ".IRC_%s.log", dest);
+			// rl_printf(">>>DEST: %s\n", dest);/////////////////
+			uint32_t hash = adler32(dest, strlen(dest));
+			snprintf(lname, sizeof(lname), ".IRC_%u.log", hash);
+			// rl_printf(">>>FILENAME: %s\n", lname);/////////////////
 			lp = fopen(lname, "ab+");
 			if (!lp)
 				error("Error opening file for writing");
 		}
+		if (dsize > 0)
+			free(dfree);
 
 
 		////////  Printing & logging  ////////
@@ -255,6 +316,13 @@ int irc_receive(char *buffer, int R) {
 		for (int i = 0; i < r; i++)
 			free(output[i]);
 		free(output);
+	}
+
+	if (_r > 0) {
+		// Free output
+		for (int i = 0; i < _r; i++)
+			free(_output[i]);
+		free(_output);
 	}
 
 	if (au_r > 0) {
@@ -335,10 +403,6 @@ Supported commands:\n\
 			dest = output[2];
 			snprintf(send, sizeof(send), "JOIN %s\r\n", dest);
 			write_socket(send);
-
-			channel = strsep(&dest, ",");
-			memset(current_channel, 0, sizeof(current_channel));
-			strncpy(current_channel, channel, sizeof(current_channel));
 		}
 		else {
 			printf("Usage: /join <channel>, Joins a channel\n");
@@ -460,7 +524,10 @@ Supported commands:\n\
 					FILE *lp;
 					char lname[512];
 
-					snprintf(lname, sizeof(lname), ".IRC_%s.log", dest);
+					// rl_printf(">>>DEST: %s\n", dest);/////////////////
+					uint32_t hash = adler32(dest, strlen(dest));
+					snprintf(lname, sizeof(lname), ".IRC_%u.log", hash);
+					// rl_printf(">>>FILENAME: %s\n", lname);/////////////////
 					lp = fopen(lname, "rb+");
 					if (!lp)
 						error("Error opening file for reading");
