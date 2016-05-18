@@ -96,9 +96,10 @@ int main(int argc, char **argv) {
 	int retval;
 
 	// Readline setup
-	using_history();
+	using_history(); // Enable history
 	const char *prompt = scolor("> ", "blue");
 	rl_callback_handler_install(prompt, &handle_line);
+	rl_bind_key ('\t', rl_insert); // Disable autocomplete
 
 	// Main program loop
 	while (loop) {
