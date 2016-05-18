@@ -26,7 +26,9 @@ int irc_receive(char *buffer, int R) {
 	char lname[512];
 
 	char **au_output;
-	char *action_user = 0;
+	int au_r;
+	char *action_user = "";
+	char *au_address  = "";
 	char temp[1024];
 
 	int retval = 1;
@@ -52,8 +54,11 @@ int irc_receive(char *buffer, int R) {
 		// rl_printf("msg: %s\n", msg);
 ///////////////////////
 
-		// Else, set to "??" to allow `strcmp(action_user, nick)` to work
-		action_user = re_match(prefix, "^([^!]+)!.+$", &au_output, 0) == 2 ? au_output[1] : "??";
+		au_r = re_match(prefix, "^([^!]+)!(.+)$", &au_output, 0);
+		if (au_r == 3) {
+			action_user = au_output[1];
+			au_address  = au_output[2];
+		}
 
 
 		// Reply to ping messages to stay connected to server
@@ -120,7 +125,7 @@ int irc_receive(char *buffer, int R) {
 				memcpy(channels[csize-1], destcpy, sizeof(destcpy));
 			}
 			else
-				snprintf(temp, sizeof(temp), "%s has joined %s", action_user, dest);
+				snprintf(temp, sizeof(temp), "%s [%s] has joined %s", action_user, au_address, dest);
 			msg = temp;
 			color = "green";
 		}
@@ -147,7 +152,7 @@ int irc_receive(char *buffer, int R) {
 				alt(0);
 			}
 			else {
-				snprintf(temp, sizeof(temp), "%s has left %s", action_user, dest);
+				snprintf(temp, sizeof(temp), "%s [%s] has left %s", action_user, au_address, dest);
 			}
 
 			msg = temp;
@@ -165,7 +170,7 @@ int irc_receive(char *buffer, int R) {
 			msg = temp;
 		}
 		else if (strcmp(type, "QUIT") == 0) {
-			snprintf(temp, sizeof(temp), "%s has quit [%s]", action_user, msg);
+			snprintf(temp, sizeof(temp), "%s [%s] has quit [%s]", action_user, au_address, msg);
 			msg = temp;
 			color = "red";
 		}
@@ -234,9 +239,9 @@ int irc_receive(char *buffer, int R) {
 		free(output);
 	}
 
-	if (action_user && strcmp(action_user, "??") != 0) {
+	if (au_r > 0) {
 		// Free au_output
-		for (int i = 0; i < 2; i++)
+		for (int i = 0; i < au_r; i++)
 			free(au_output[i]);
 		free(au_output);
 	}
