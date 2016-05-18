@@ -350,11 +350,15 @@ Supported commands:\n\
 		r = re_match(buffer, irc_regex, &output, 0);
 		if (r > 3) {
 			snprintf(send, sizeof(send), "%s\r\n", buffer);
+			write_socket(send);
+		}
+		else if (current_channel[0]) {
+			snprintf(send, sizeof(send), "PART %s\r\n", current_channel);
+			write_socket(send);
 		}
 		else {
-			snprintf(send, sizeof(send), "PART %s\r\n", current_channel);
+			printf("No channel joined. Try /join #<channel>\n");
 		}
-		write_socket(send);
 	}
 	else if (strcmp(command, "quit") == 0) {
 		snprintf(send, sizeof(send), "QUIT\r\n");
