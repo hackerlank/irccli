@@ -10,8 +10,6 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-#include <glob.h>
-
 #include "util.h"
 #include "xterm.h"
 #include "sock_util.h"
@@ -193,15 +191,6 @@ int main(int argc, char **argv) {
 	// Always switch back to normal screen if entered alternate screen buffer
 	if (galt())
 		printf("%s", xget("rmcup"));
-
-	// Delete logs
-	glob_t paths;
-	if (glob(".IRC_*.log", GLOB_NOSORT, NULL, &paths) == 0) {
-		for (size_t i = 0; i < paths.gl_pathc; i++) {
-			remove(paths.gl_pathv[i]);
-		}
-	}
-	globfree(&paths);
 
 	irc_clean();      // Clean irc variables
 	destroy_prompt(); // Readline cleanup

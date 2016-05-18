@@ -5,6 +5,8 @@
 #include <string.h>
 #include <time.h>
 
+#include <glob.h>
+
 #include "util.h"
 #include "xterm.h"
 #include "pcre_util.h"

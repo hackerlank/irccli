@@ -274,7 +274,8 @@ int irc_receive(char *buffer, int R) {
 int irc_send(char *buffer) {
 	char send[512];
 
-	// Not a command, just send the message
+
+	////////  No command, just send privmsg  ////////
 	if (buffer[0] != '/') {
 		if (current_channel[0]) {
 			snprintf(send, sizeof(send), "PRIVMSG %s :%s\r\n", current_channel, buffer);
@@ -310,6 +311,8 @@ int irc_send(char *buffer) {
 	for (int i = 0; command[i]; i++)
 		command[i] = tolower(command[i]);
 
+
+	////////  Command parsing  ////////
 	if (strcmp(command, "help") == 0) {
 		printf("\
 Supported commands:\n\
@@ -505,4 +508,13 @@ void irc_clean() {
 		for (int i = 0; ctofree[i]; i++)
 			free(ctofree[i]);
 	}
+
+	// Delete logs
+	glob_t paths;
+	if (glob(".IRC_*.log", GLOB_NOSORT, NULL, &paths) == 0) {
+		for (size_t i = 0; i < paths.gl_pathc; i++) {
+			remove(paths.gl_pathv[i]);
+		}
+	}
+	globfree(&paths);
 }
