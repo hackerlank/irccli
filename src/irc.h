@@ -27,9 +27,7 @@ static char real[512];
 
 // List of channels currently connected to
 static char **channels;
-static char **ctofree;
 static int csize = 0; // Number of channels in channels array
-static int allocd = 0;
 
 void irc_nick();
 void irc_user();

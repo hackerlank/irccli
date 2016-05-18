@@ -110,8 +110,8 @@ int irc_receive(char *buffer, int R) {
 				strncpy(current_channel, dest, sizeof(current_channel));
 
 				// Add channel to list of channels
-				ctofree = channels = csize ? realloc(channels, ++csize * sizeof(char *))
-				                          : malloc(++csize * sizeof(char *));
+				channels = csize ? realloc(channels, ++csize * sizeof(char *))
+				                 : malloc(++csize * sizeof(char *));
 
 				char destcpy[256];
 				channels[csize-1] = malloc(sizeof(destcpy));
@@ -569,10 +569,9 @@ Supported commands:\n\
 }
 
 void irc_clean() {
-	if (allocd) {
-		for (int i = 0; ctofree[i]; i++)
-			free(ctofree[i]);
-	}
+	// Free channels
+	for (int i = 0; i < csize; i++)
+		free(channels[i]);
 
 	// Delete logs
 	glob_t paths;
