@@ -318,16 +318,16 @@ int irc_send(char *buffer) {
 		printf("\
 Supported commands:\n\
 \n\
-/help                  Shows this help message\n\
-/join <channel>        Joins a channel\n\
-/part [<channel>]      Leaves a specified channel\n\
-/quit                  Closes the connection with the server and quits\n\
-/msg <user> <message>  Sends a private message to a user\n\
-/me <action>           Sends the action to the current channel\n\
-/names [<channel>]     Lists the users in a specified channel\n\
-/list                  Lists the channels on the server\n\
 /channel <channel>     Switches the current channel\n\
 /channels              Lists the channels currently connected to\n\
+/help                  Shows this help message\n\
+/join <channel>        Joins a channel\n\
+/list                  Lists the channels on the server\n\
+/me <action>           Sends the action to the current channel\n\
+/msg <user> <message>  Sends a private message to a user\n\
+/names [<channel>]     Lists the users in a specified channel\n\
+/part [<channel>]      Leaves a specified channel\n\
+/quit                  Closes the connection with the server and quits\n\
 ");
 	}
 	else if (strcmp(command, "join") == 0) {
