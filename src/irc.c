@@ -254,7 +254,7 @@ int irc_receive(char *buffer, int R) {
 
 		////////  Log setup  ////////
 		if (log) {
-			uint32_t hash = adler32(dest, strlen(dest));
+			uint32_t hash = murmur3_32(dest, strlen(dest), 0x1337);
 			snprintf(lname, sizeof(lname), ".IRC_%u.log", hash);
 			lp = fopen(lname, "ab+");
 			if (!lp)
@@ -524,7 +524,7 @@ Supported commands:\n\
 					FILE *lp;
 					char lname[512];
 
-					uint32_t hash = adler32(dest, strlen(dest));
+					uint32_t hash = murmur3_32(dest, strlen(dest), 0x1337);
 					snprintf(lname, sizeof(lname), ".IRC_%u.log", hash);
 					lp = fopen(lname, "rb+");
 					if (!lp)
