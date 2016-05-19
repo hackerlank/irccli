@@ -11,6 +11,9 @@ Irccli is a simple command line irc client written from scratch in C. It is curr
 Simply run `./configure` and then `make`.
 
 ## Todo
+- Add `-e` option for different encoding charsets
+ - Use `<getopt.h>`
+ - Add `-el` to list available encoding types
 - Add automatic Nickserv with specified password
 - Add `/channel` functionality that if no channel is specified, go to most recent channel
 - Remove the prompt input from being printed after hit enter
