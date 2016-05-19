@@ -17,4 +17,5 @@ Simply run `./configure` and then `make`.
 - Add `/channel` functionality for private messages from different users
  - Fix `/msg` functionality (does not print or switch to different "channel" mode)
 - Only print `QUIT` messages for the channel the user quit from (multiple if necessary)
+ - (And log to the correct channel)
  - Maybe use structs for each channel and keep an array of users
