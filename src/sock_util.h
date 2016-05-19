@@ -9,6 +9,8 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
+#include <iconv.h>
+
 #include "util.h"
 
 static int sockfd;

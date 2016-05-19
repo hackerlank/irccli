@@ -7,6 +7,17 @@ int getsockfd() {
 int read_socket(char buffer[512]) {
 	int n = read(sockfd, buffer, 511);
 
+
+	////////  Convert to unicode from ISO-2022-JP  ////////
+	iconv_t cd = iconv_open ("UTF-8", "ISO-2022-JP");
+	char *buffcpy = malloc(512);
+	strncpy(buffcpy, buffer, 512);
+	memset(buffer, 0, 512);
+	size_t insize  = 512;
+	size_t outsize = 512;
+	iconv (cd, &buffcpy, &insize, &buffer, &outsize);
+
+
 	if (n < 0)
 		error("Error reading from socket");
 
@@ -14,7 +25,16 @@ int read_socket(char buffer[512]) {
 }
 
 void write_socket(char msg[512]) {
-	int n = write(sockfd, msg, strlen(msg));
+	////////  Convert from unicode to ISO-2022-JP  ////////
+	iconv_t cd = iconv_open("ISO-2022-JP", "UTF-8");
+	size_t insize  = 512;
+	size_t outsize = 512;
+	char buf[512];
+	char *outptr = (char*)&buf[0];
+	iconv(cd, &msg, &insize, &outptr, &outsize);
+
+
+	int n = write(sockfd, buf, strlen(buf));
 	if (n < 0)
 		error("Error writing to socket");
 }

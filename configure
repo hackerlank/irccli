@@ -20,7 +20,7 @@ CFLAGS=-c -Wall -Wextra -g -O0' > makefile
 # For debugging with address sanitation:
 ###############################
 ldlibs="" #`pkg-config --libs `
-echo "LDLIBS=$ldlibs -L/opt/local/lib -L/usr/local/lib -lpcre -lreadline -fsanitize=address" >> makefile
+echo "LDLIBS=$ldlibs -L/opt/local/lib -L/usr/local/lib -lpcre -lreadline -liconv -fsanitize=address" >> makefile
 
 
 ldflags="" #`pkg-config --cflags `
