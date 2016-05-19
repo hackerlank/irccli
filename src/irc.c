@@ -274,7 +274,7 @@ int irc_receive(char *buffer, int R) {
 		snprintf(out_time, sizeof(out_time), "[%02d:%02d]", timeinfo->tm_hour, timeinfo->tm_min);
 
 		// Color output
-		char *c_time = scolor(out_time, "red");
+		char *c_time = scolor(out_time, "blue");
 		if (*color) {
 			if (*middle) middle = scolor(middle, color);
 			if (*msg)    msg    = scolor(msg,    color);
