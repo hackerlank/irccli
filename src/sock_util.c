@@ -5,16 +5,16 @@ int getsockfd() {
 }
 
 int read_socket(char buffer[512]) {
-	int n = read(sockfd, buffer, 127);
+	int n = read(sockfd, buffer, 511);
 
 
 	////////  Convert to unicode from ISO-2022-JP  ////////
 	iconv_t cd = iconv_open ("UTF-8", "ISO-2022-JP");
-	char buffcpy[128];
-	strncpy(buffcpy, buffer, 128);
+	char buffcpy[512];
+	strncpy(buffcpy, buffer, 512);
 	char *inptr = (char *) &buffcpy[0];
 	memset(buffer, 0, 512);
-	size_t insize  = 128;
+	size_t insize  = 512;
 	size_t outsize = 512;
 	iconv (cd, &inptr, &insize, &buffer, &outsize);
 
