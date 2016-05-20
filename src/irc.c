@@ -364,7 +364,7 @@ int irc_send(char *buffer) {
 			write_socket(send);
 
 			// Print the message because the server doesn't send it back
-			memset(send, 0, sizeof(memset));
+			memset(send, 0, sizeof(send));
 			snprintf(send, sizeof(send), ":%s!X PRIVMSG %s :%s\r\n", nick, current_channel, buffer);
 			irc_receive(send, 0);
 		}
