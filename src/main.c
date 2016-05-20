@@ -10,12 +10,15 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
+#include <iconv.h>
+
 #include "util.h"
 #include "xterm.h"
 #include "sock_util.h"
 #include "irc.h"
 
 static int loop = 1;
+static const char *encoding = "";
 
 void usage(char *prog) {
 	fprintf(stderr, "Usage: %s <server>[:<port>] <nickname> [<username>] [<realname>]\n", prog);
@@ -71,8 +74,13 @@ int main(int argc, char **argv) {
 		}
 	}
 
+	////////////////////////////////   ENCODING   ////////////////////////////////
+	encoding = "";
+
 	// Connect to the server
 	connect_socket(serv_port[0], portno);
+	// Setup encoding for writing to socket
+	encode_socket(encoding);
 
 	// Free serv_port
 	free(serv_port);
@@ -152,7 +160,21 @@ int main(int argc, char **argv) {
 
 				// Handle each line
 				while ( (token = strsep(&buffsave, "\n")) ) {
-					if (strlen(token)) {
+					if (*token) {
+						if (*encoding) {
+							////////  Convert to unicode from encoding  ////////
+							iconv_t cd = iconv_open("UTF-8", encoding);
+							char tokencpy[512];
+							char otoken[512];
+							strncpy(tokencpy, token, 512);
+							char *inptr  = (char *) &tokencpy[0];
+							char *outptr = (char *) &otoken[0];
+							size_t insize  = 512;
+							size_t outsize = 512;
+							iconv(cd, &inptr, &insize, &outptr, &outsize);
+							token = otoken;
+						}
+
 						if (!irc_receive(token, 1)) {
 							loop = 0;
 							break;
@@ -170,7 +192,21 @@ int main(int argc, char **argv) {
 				tofree = buffcpy = malloc(512+1);
 				strncpy(buffcpy, buffer, 512+1);
 				while ( (token = strsep(&buffcpy, "\n")) ) {
-					if (strlen(token)) {
+					if (*token) {
+						if (*encoding) {
+							////////  Convert to unicode from encoding  ////////
+							iconv_t cd = iconv_open("UTF-8", encoding);
+							char tokencpy[512];
+							char otoken[512];
+							strncpy(tokencpy, token, 512);
+							char *inptr  = (char *) &tokencpy[0];
+							char *outptr = (char *) &otoken[0];
+							size_t insize  = 512;
+							size_t outsize = 512;
+							iconv(cd, &inptr, &insize, &outptr, &outsize);
+							token = otoken;
+						}
+
 						if (!irc_receive(token, 1)) {
 							loop = 0;
 							break;
