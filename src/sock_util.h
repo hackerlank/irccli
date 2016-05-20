@@ -13,8 +13,6 @@
 
 #include "util.h"
 
-static int sockfd;
-
 int getsockfd();
 
 int read_socket(char buffer[512]);

@@ -49,6 +49,7 @@ char *scolor(char *str, const char *color) {
 }
 
 // Lovingly used from https://en.wikipedia.org/wiki/MurmurHash
+#define ROT32(x, y) ((x << y) | (x >> (32 - y))) // avoid effort
 uint32_t murmur3_32(const char *key, uint32_t len, uint32_t seed) {
 	static const uint32_t c1 = 0xcc9e2d51;
 	static const uint32_t c2 = 0x1b873593;

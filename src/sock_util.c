@@ -1,5 +1,6 @@
 #include "sock_util.h"
 
+static int sockfd;
 static const char *encoding = "";
 
 int getsockfd() {
