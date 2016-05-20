@@ -153,7 +153,7 @@ int irc_receive(char *buffer, int R) {
 
 			msg = temp;
 			log = 1;
-			color = "red";
+			color = "yellow";
 		}
 		else if (strcmp(type, "PRIVMSG") == 0) {
 			if (strcmp(dest, nick) == 0) {
@@ -200,7 +200,7 @@ int irc_receive(char *buffer, int R) {
 			snprintf(temp, sizeof(temp), "%s [%s] has quit [%s]", action_user, au_address, msg);
 			msg = temp;
 			log = 1;
-			color = "red";
+			color = "yellow";
 		}
 
 
