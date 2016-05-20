@@ -15,7 +15,7 @@
 // Lovingly used from
 // https://mybuddymichael.com/writings/a-regular-expression-for-irc-messages.html
 // (slightly modified)
-static const char *irc_regex = "^(?:[:](\\S+) )?(\\S+)(?: (?!:)(.+?))?(?: (?!:)(.+?))?(?: [:](.+?))?\\R?$";
+static const char *irc_regex = "^(?:[:](\\S+) )?(\\S+)(?: (?!:)(.+?))?(?: (?!:)(.+?))?(?: [:](.*?))?\\R?$";
 
 // Channels names are strings (beginning with a '&' or '#' character)
 // of length up to 200 characters.
