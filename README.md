@@ -13,8 +13,9 @@ Simply run `./configure` and then `make`.
 ## Todo
 - Add functionality for: if user enters command longer than buff can hold, split into several messages and send
  - Maybe `sleep(0.5)` between each send?
-- Add `-e` option for different encoding charsets
- - Use `<getopt.h>`
+- Use `<getopt.h>`
+ - Add `-h` option to display usage
+ - Add `-e` option for different encoding charsets
  - Add `-el` to list available encoding types
 - Add automatic Nickserv with specified password
 - Add `/channel` functionality that if no channel is specified, go to most recent channel

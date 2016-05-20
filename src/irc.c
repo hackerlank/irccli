@@ -282,20 +282,20 @@ int irc_receive(char *buffer, int R) {
 
 		if (*middle) {
 			if (*msg) {
-				if (log)   fprintf(lp,   "%s %s :%s\n", c_time, middle, msg);
-				if (print) R ? rl_printf("%s %s :%s\n", c_time, middle, msg)
-					         : printf(   "%s %s :%s\n", c_time, middle, msg);
+				if (log)       fprintf(lp, "%s %s :%s\n", c_time, middle, msg);
+				if (print) R ? rl_printf(  "%s %s :%s\n", c_time, middle, msg)
+					         : printf(     "%s %s :%s\n", c_time, middle, msg);
 			}
 			else {
-				if (log)   fprintf(lp,   "%s %s\n", c_time, middle);
-				if (print) R ? rl_printf("%s %s\n", c_time, middle)
-					         : printf(   "%s %s\n", c_time, middle);
+				if (log)       fprintf(lp, "%s %s\n", c_time, middle);
+				if (print) R ? rl_printf(  "%s %s\n", c_time, middle)
+					         : printf(     "%s %s\n", c_time, middle);
 			}
 		}
 		else if (*msg) {
-			if (log)   fprintf(lp,   "%s %s\n", c_time, msg);
-			if (print) R ? rl_printf("%s %s\n", c_time, msg)
-				         : printf(   "%s %s\n", c_time, msg);
+			if (log)       fprintf(lp, "%s %s\n", c_time, msg);
+			if (print) R ? rl_printf(  "%s %s\n", c_time, msg)
+				         : printf(     "%s %s\n", c_time, msg);
 		}
 
 		// Free color variables
