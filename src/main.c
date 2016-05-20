@@ -10,6 +10,8 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
+#include <iconv.h>
+
 #include "util.h"
 #include "xterm.h"
 #include "sock_util.h"
@@ -153,7 +155,21 @@ int main(int argc, char **argv) {
 				// Handle each line
 				while ( (token = strsep(&buffsave, "\n")) ) {
 					if (strlen(token)) {
-						if (!irc_receive(token, 1)) {
+
+
+						////////  Convert to unicode from ISO-2022-JP  ////////
+						iconv_t cd = iconv_open("UTF-8", "ISO-2022-JP");
+						char tokencpy[512];
+						char otoken[512];
+						strncpy(tokencpy, token, 512);
+						char *inptr  = (char *) &tokencpy[0];
+						char *outptr = (char *) &otoken[0];
+						size_t insize  = 512;
+						size_t outsize = 512;
+						iconv(cd, &inptr, &insize, &outptr, &outsize);
+
+
+						if (!irc_receive(otoken, 1)) {
 							loop = 0;
 							break;
 						}
@@ -171,7 +187,21 @@ int main(int argc, char **argv) {
 				strncpy(buffcpy, buffer, 512);
 				while ( (token = strsep(&buffcpy, "\n")) ) {
 					if (strlen(token)) {
-						if (!irc_receive(token, 1)) {
+
+
+						////////  Convert to unicode from ISO-2022-JP  ////////
+						iconv_t cd = iconv_open("UTF-8", "ISO-2022-JP");
+						char tokencpy[512];
+						char otoken[512];
+						strncpy(tokencpy, token, 512);
+						char *inptr  = (char *) &tokencpy[0];
+						char *outptr = (char *) &otoken[0];
+						size_t insize  = 512;
+						size_t outsize = 512;
+						iconv(cd, &inptr, &insize, &outptr, &outsize);
+
+
+						if (!irc_receive(otoken, 1)) {
 							loop = 0;
 							break;
 						}
