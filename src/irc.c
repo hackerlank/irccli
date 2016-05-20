@@ -27,7 +27,7 @@ int irc_receive(char *buffer, int R) {
 
 	int log = 0;
 	FILE *lp;
-	char lname[512];
+	char lname[256];
 
 	char **au_output;
 	int au_r;
@@ -530,7 +530,7 @@ Shortcuts:\n\
 					strncpy(current_channel, dest, sizeof(current_channel));
 
 					FILE *lp;
-					char lname[512];
+					char lname[256];
 
 					uint32_t hash = murmur3_32(dest, strlen(dest), 0x1337);
 					snprintf(lname, sizeof(lname), ".IRC_%u.log", hash);

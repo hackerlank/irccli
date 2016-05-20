@@ -4,8 +4,8 @@ int getsockfd() {
 	return sockfd;
 }
 
-int read_socket(char buffer[512]) {
-	int n = read(sockfd, buffer, 511);
+int read_socket(char buffer[512+1]) {
+	int n = read(sockfd, buffer, 512);
 
 	if (n < 0)
 		error("Error reading from socket");

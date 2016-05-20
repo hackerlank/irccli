@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
 
 	// Output variables
 	int n;
-	char buffer[512];
+	char buffer[512+1];
 	char *buffsave;
 	size_t buffsavesize = sizeof(buffsave);
 
@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
 		// Socket received input
 		if (FD_ISSET(getsockfd(), &fds)) {
 			n = read_socket(buffer);
-			buffer[n] = 0; // Safe because read_socket returns at most 511
+			buffer[n] = 0; // Safe because read_socket returns at most 512
 
 			// Received in the middle of a line, so store in another buffer
 			if (buffer[n - 1] != '\n') {
@@ -167,8 +167,8 @@ int main(int argc, char **argv) {
 			else {
 				// Handle each line
 				char *buffcpy, *tofree;
-				tofree = buffcpy = malloc(512);
-				strncpy(buffcpy, buffer, 512);
+				tofree = buffcpy = malloc(512+1);
+				strncpy(buffcpy, buffer, 512+1);
 				while ( (token = strsep(&buffcpy, "\n")) ) {
 					if (strlen(token)) {
 						if (!irc_receive(token, 1)) {
