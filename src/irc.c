@@ -37,9 +37,6 @@ int irc_receive(char *buffer, int R) {
 
 	int retval = 1;
 
-	if (buffer[strlen(buffer) - 1] == '\n')
-		buffer[strlen(buffer) - 1] = 0;
-
 	int r = re_match(buffer, irc_regex, &output, 0);
 	if (r > 3) { // Must at least have dest, which is third match
 		prefix = output[1];
@@ -394,7 +391,7 @@ Supported commands:\n\
 /msg <user> <message>  Sends a private message to a user\n\
 /names [<channel>]     Lists the users in a specified channel\n\
 /part [<channel>]      Leaves a specified channel\n\
-/quit                  Closes the connection with the server and quits\n\
+/quit [<message>]      Quits, sending a specified message\n\
 \n\
 Shortcuts:\n\
 /(c)hannel\n\
@@ -432,8 +429,16 @@ Shortcuts:\n\
 		}
 	}
 	else if (strcmp(command, "quit") == 0 || strcmp(command, "q") == 0) {
-		snprintf(send, sizeof(send), "QUIT\r\n");
-		write_socket(send);
+		r = re_match(buffer, "^(quit|q) (.+)$", &output, 1);
+		if (r == 3) {
+			msg = output[2];
+			snprintf(send, sizeof(send), "QUIT :%s\r\n", msg);
+			write_socket(send);
+		}
+		else {
+			snprintf(send, sizeof(send), "QUIT\r\n");
+			write_socket(send);
+		}
 		retval = 0;
 	}
 	else if (strcmp(command, "msg") == 0 || strcmp(command, "m") == 0) {
@@ -478,7 +483,7 @@ Shortcuts:\n\
 			}
 		}
 	}
-	else if (strcmp(command, "names") == 0) {
+	else if (strcmp(command, "names") == 0) {/////////////////////////////
 		r = re_match(buffer, irc_regex, &output, 0);
 		if (r > 3) {
 			dest = output[3];
