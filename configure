@@ -14,17 +14,14 @@ echo $'CC=gcc
 CFLAGS=-c -Wall -Wextra -g -O0' > makefile
 
 
-# ldlibs="" #`pkg-config --libs `
-# echo "LDLIBS=$ldlibs -L/opt/local/lib -L/usr/local/lib -lpcre -lreadline" >> makefile
+# echo "LDLIBS=-L/opt/local/lib -L/usr/local/lib -lpcre -lreadline" >> makefile
 
 # For debugging with address sanitation:
 ###############################
-ldlibs="" #`pkg-config --libs `
-echo "LDLIBS=$ldlibs -L/opt/local/lib -L/usr/local/lib -lpcre -lreadline -fsanitize=address" >> makefile
+echo "LDLIBS=-L/opt/local/lib -L/usr/local/lib -lpcre -lreadline -fsanitize=address" >> makefile
 
 
-ldflags="" #`pkg-config --cflags `
-echo "LDFLAGS=$ldflags -I/opt/local/include" >> makefile
+echo "LDFLAGS=-I/opt/local/include" >> makefile
 
 
 echo $'EXECUTABLE=irc
