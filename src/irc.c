@@ -99,10 +99,10 @@ int irc_receive(char *buffer, int R) {
 		////////  Special action messages  ////////
 		//         (different colors)
 		if (strcmp(type, "JOIN") == 0) {
+			if (!*dest) dest = msg; // Some servers use msg instead of dest
 			if (strcmp(action_user, nick) == 0) {
 				printf("%s", xget("smcup")); // Switch to alternate screen buffer
 				alt(1);
-				if (!*dest) dest = msg; // Some servers use msg instead of dest
 				snprintf(temp, sizeof(temp), "Now talking on %s", dest);
 
 				// Set current channel
