@@ -1,5 +1,7 @@
 #include "sock_util.h"
 
+static const char *encoding = "";
+
 int getsockfd() {
 	return sockfd;
 }
@@ -14,16 +16,18 @@ int read_socket(char buffer[512]) {
 }
 
 void write_socket(char msg[512]) {
-	////////  Convert from unicode to ISO-2022-JP  ////////
-	iconv_t cd = iconv_open("ISO-2022-JP", "UTF-8");
-	char buf[512];
-	char *outptr = (char *) &buf[0];
-	size_t insize  = 512;
-	size_t outsize = 512;
-	iconv(cd, &msg, &insize, &outptr, &outsize);
+	if (*encoding) {
+		////////  Convert from unicode to encoding  ////////
+		iconv_t cd = iconv_open(encoding, "UTF-8");
+		char buffer[512];
+		char *outptr = (char *) &buffer[0];
+		size_t insize  = 512;
+		size_t outsize = 512;
+		iconv(cd, &msg, &insize, &outptr, &outsize);
+		msg = buffer;
+	}
 
-
-	int n = write(sockfd, buf, strlen(buf));
+	int n = write(sockfd, msg, strlen(msg));
 	if (n < 0)
 		error("Error writing to socket");
 }
@@ -90,6 +94,10 @@ void connect_socket(char *server_name, int portno) {
 		if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
 			error("Error connecting");
 	}
+}
+
+void encode_socket(const char *enc) {
+	encoding = enc;
 }
 
 void close_socket() {

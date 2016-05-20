@@ -18,6 +18,7 @@
 #include "irc.h"
 
 static int loop = 1;
+static const char *encoding = "";
 
 void usage(char *prog) {
 	fprintf(stderr, "Usage: %s <server>[:<port>] <nickname> [<username>] [<realname>]\n", prog);
@@ -73,8 +74,13 @@ int main(int argc, char **argv) {
 		}
 	}
 
+	////////////////////////////////   ENCODING   ////////////////////////////////
+	encoding = "";
+
 	// Connect to the server
 	connect_socket(serv_port[0], portno);
+	// Setup encoding for writing to socket
+	encode_socket(encoding);
 
 	// Free serv_port
 	free(serv_port);
@@ -154,22 +160,22 @@ int main(int argc, char **argv) {
 
 				// Handle each line
 				while ( (token = strsep(&buffsave, "\n")) ) {
-					if (strlen(token)) {
+					if (*token) {
+						if (*encoding) {
+							////////  Convert to unicode from encoding  ////////
+							iconv_t cd = iconv_open("UTF-8", encoding);
+							char tokencpy[512];
+							char otoken[512];
+							strncpy(tokencpy, token, 512);
+							char *inptr  = (char *) &tokencpy[0];
+							char *outptr = (char *) &otoken[0];
+							size_t insize  = 512;
+							size_t outsize = 512;
+							iconv(cd, &inptr, &insize, &outptr, &outsize);
+							token = otoken;
+						}
 
-
-						////////  Convert to unicode from ISO-2022-JP  ////////
-						iconv_t cd = iconv_open("UTF-8", "ISO-2022-JP");
-						char tokencpy[512];
-						char otoken[512];
-						strncpy(tokencpy, token, 512);
-						char *inptr  = (char *) &tokencpy[0];
-						char *outptr = (char *) &otoken[0];
-						size_t insize  = 512;
-						size_t outsize = 512;
-						iconv(cd, &inptr, &insize, &outptr, &outsize);
-
-
-						if (!irc_receive(otoken, 1)) {
+						if (!irc_receive(token, 1)) {
 							loop = 0;
 							break;
 						}
@@ -186,22 +192,22 @@ int main(int argc, char **argv) {
 				tofree = buffcpy = malloc(512);
 				strncpy(buffcpy, buffer, 512);
 				while ( (token = strsep(&buffcpy, "\n")) ) {
-					if (strlen(token)) {
+					if (*token) {
+						if (*encoding) {
+							////////  Convert to unicode from encoding  ////////
+							iconv_t cd = iconv_open("UTF-8", encoding);
+							char tokencpy[512];
+							char otoken[512];
+							strncpy(tokencpy, token, 512);
+							char *inptr  = (char *) &tokencpy[0];
+							char *outptr = (char *) &otoken[0];
+							size_t insize  = 512;
+							size_t outsize = 512;
+							iconv(cd, &inptr, &insize, &outptr, &outsize);
+							token = otoken;
+						}
 
-
-						////////  Convert to unicode from ISO-2022-JP  ////////
-						iconv_t cd = iconv_open("UTF-8", "ISO-2022-JP");
-						char tokencpy[512];
-						char otoken[512];
-						strncpy(tokencpy, token, 512);
-						char *inptr  = (char *) &tokencpy[0];
-						char *outptr = (char *) &otoken[0];
-						size_t insize  = 512;
-						size_t outsize = 512;
-						iconv(cd, &inptr, &insize, &outptr, &outsize);
-
-
-						if (!irc_receive(otoken, 1)) {
+						if (!irc_receive(token, 1)) {
 							loop = 0;
 							break;
 						}
