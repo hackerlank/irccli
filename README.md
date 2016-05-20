@@ -11,6 +11,7 @@ Irccli is a simple command line irc client written from scratch in C. It is curr
 Simply run `./configure` and then `make`.
 
 ## Todo
+- Add support for bold, underline, (colors?)
 - Add functionality for: if user enters command longer than buff can hold, split into several messages and send
  - Maybe `sleep(0.5)` between each send?
 - Use `<getopt.h>`
