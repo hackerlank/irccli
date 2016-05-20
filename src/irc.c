@@ -362,7 +362,6 @@ int irc_send(char *buffer) {
 	char *dest, *msg;
 	int r = 0;
 
-	char *channel;
 	int retval = 1;
 
 	buffer++; // Remove '/'
@@ -389,7 +388,7 @@ Supported commands:\n\
 /list                  Lists the channels on the server\n\
 /me <action>           Sends the action to the current channel\n\
 /msg <user> <message>  Sends a private message to a user\n\
-/names [<channel>]     Lists the users in a specified channel\n\
+/names                 Lists the users in the current channel\n\
 /part [<channel>]      Leaves a specified channel\n\
 /quit [<message>]      Quits, sending a specified message\n\
 \n\
@@ -483,18 +482,9 @@ Shortcuts:\n\
 			}
 		}
 	}
-	else if (strcmp(command, "names") == 0) {/////////////////////////////
-		r = re_match(buffer, irc_regex, &output, 0);
-		if (r > 3) {
-			dest = output[3];
-			channel = strsep(&dest, ",");
-		}
-		else {
-			channel = current_channel;
-		}
-
-		if (*channel) {
-			snprintf(send, sizeof(send), "NAMES %s\r\n", channel);
+	else if (strcmp(command, "names") == 0) {
+		if (*current_channel) {
+			snprintf(send, sizeof(send), "NAMES %s\r\n", current_channel);
 			write_socket(send);
 		}
 		else {
