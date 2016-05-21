@@ -189,9 +189,12 @@ int irc_receive(char *buffer, int R) {
 				// // // // // // // // // //
 			}
 			else {
+				int freehost = 0;
 				// Someone is talking about user
-				if (strstr(msg, nick) != NULL)
+				if (strstr(msg, nick) != NULL) {
 					host = scolor(host, "red");
+					freehost = 1;
+				}
 
 				//// Display action messages
 				_r = re_match(msg, "^\1ACTION (.+)\1$", &_output, 0);
@@ -200,10 +203,12 @@ int irc_receive(char *buffer, int R) {
 					snprintf(temp, sizeof(temp), "* %s %s", host, msg);
 				}
 				else {
-					snprintf(temp, sizeof(temp), "%s: %s", host, msg);
+					host = scolor(host, "cyan");
+					snprintf(temp, sizeof(temp), "<%s> %s", host, msg);
+					freehost = 1;
 				}
 
-				if (strstr(msg, nick) != NULL)
+				if (freehost)
 					free(host);
 
 				log = 1;
