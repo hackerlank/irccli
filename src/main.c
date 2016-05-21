@@ -365,8 +365,10 @@ Full Unicode\n\
 	}
 
 	// Always switch back to normal screen if entered alternate screen buffer
-	if (galt())
+	if (galt()) {
 		printf("%s", xget("rmcup"));
+		fflush(stdout);
+	}
 
 	irc_clean();      // Clean irc variables
 	destroy_prompt(); // Readline cleanup
