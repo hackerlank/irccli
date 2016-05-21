@@ -14,7 +14,7 @@ echo $'CC=gcc
 CFLAGS=-c -Wall -Wextra -g -O0' > makefile
 
 
-# echo "LDLIBS=-L/opt/local/lib -L/usr/local/lib -lpcre -lreadline" >> makefile
+# echo "LDLIBS=-L/opt/local/lib -L/usr/local/lib -lpcre -lreadline -liconv" >> makefile
 
 # For debugging with address sanitation:
 ###############################
