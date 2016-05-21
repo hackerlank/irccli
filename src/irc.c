@@ -198,8 +198,8 @@ int irc_receive(char *buffer, int R) {
 			}
 			else {
 				int freehost = 0;
-				// Someone is talking about user
-				if (strstr(msg, nick) != NULL) {
+				// Someone is talking about user, but not self
+				if (strstr(msg, nick) != NULL && strcmp(host, nick) != 0) {
 					host = scolor(host, "red");
 					freehost = 1;
 				}
