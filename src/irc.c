@@ -17,6 +17,9 @@ static char real[512];
 static char **channels;
 static int csize = 0; // Number of channels in channels array
 
+static char *server = "";
+static int keep_logs = 0;
+
 void irc_nick(char *_nick) {
 	strncpy(nick, _nick, sizeof(nick));
 	char nick_msg[512];
@@ -30,6 +33,11 @@ void irc_user(char *_user, char *_real) {
 	char user_msg[512];
 	snprintf(user_msg, sizeof(user_msg), "USER %s 0 * :%s\r\n", user, real);
 	write_socket(user_msg);
+}
+
+void irc_init(char *_server, int log) {
+	server    = _server;
+	keep_logs = log;
 }
 
 int irc_receive(char *buffer, int R) {
@@ -273,7 +281,10 @@ int irc_receive(char *buffer, int R) {
 
 		////////  Log setup  ////////
 		if (log) {
-			uint32_t hash = murmur3_32(dest, strlen(dest), 0x1337);
+			int thsize = sizeof(server) + strlen(dest) + 2; // 1 for ':' and 1 for '\0'
+			char tohash[thsize];
+			snprintf(tohash, thsize, "%s:%s", server, dest);
+			uint32_t hash = murmur3_32(tohash, thsize, 0x1337);
 			snprintf(lname, sizeof(lname), ".IRC_%u.log", hash);
 			lp = fopen(lname, "ab+");
 			if (!lp)
@@ -303,18 +314,18 @@ int irc_receive(char *buffer, int R) {
 			if (*msg) {
 				if (log)       fprintf(lp, "%s %s :%s\n", c_time, middle, msg);
 				if (print) R ? rl_printf(  "%s %s :%s\n", c_time, middle, msg)
-					         : printf(     "%s %s :%s\n", c_time, middle, msg);
+				             : printf(     "%s %s :%s\n", c_time, middle, msg);
 			}
 			else {
 				if (log)       fprintf(lp, "%s %s\n", c_time, middle);
 				if (print) R ? rl_printf(  "%s %s\n", c_time, middle)
-					         : printf(     "%s %s\n", c_time, middle);
+				             : printf(     "%s %s\n", c_time, middle);
 			}
 		}
 		else if (*msg) {
 			if (log)       fprintf(lp, "%s %s\n", c_time, msg);
 			if (print) R ? rl_printf(  "%s %s\n", c_time, msg)
-				         : printf(     "%s %s\n", c_time, msg);
+			             : printf(     "%s %s\n", c_time, msg);
 		}
 
 		// Free color variables
@@ -520,7 +531,8 @@ Shortcuts:\n\
 
 				// Print the message because the server doesn't send it back
 				memset(send, 0, sizeof(memset));
-				snprintf(send, sizeof(send), ":%s!X PRIVMSG %s :\1ACTION %s\1\r\n", nick, current_channel, msg);
+				snprintf(send, sizeof(send),
+					":%s!X PRIVMSG %s :\1ACTION %s\1\r\n", nick, current_channel, msg);
 				irc_receive(send, 0);
 			}
 			else {
@@ -573,7 +585,10 @@ Shortcuts:\n\
 					FILE *lp;
 					char lname[256];
 
-					uint32_t hash = murmur3_32(dest, strlen(dest), 0x1337);
+					int thsize = sizeof(server) + strlen(dest) + 2; // 1 for ':' and 1 for '\0'
+					char tohash[thsize];
+					snprintf(tohash, thsize, "%s:%s", server, dest);
+					uint32_t hash = murmur3_32(tohash, thsize, 0x1337);
 					snprintf(lname, sizeof(lname), ".IRC_%u.log", hash);
 					lp = fopen(lname, "rb+");
 					if (!lp)
@@ -623,11 +638,13 @@ void irc_clean() {
 		free(channels[i]);
 
 	// Delete logs
-	glob_t paths;
-	if (glob(".IRC_*.log", GLOB_NOSORT, NULL, &paths) == 0) {
-		for (size_t i = 0; i < paths.gl_pathc; i++) {
-			remove(paths.gl_pathv[i]);
+	if (!keep_logs) {
+		glob_t paths;
+		if (glob(".IRC_*.log", GLOB_NOSORT, NULL, &paths) == 0) {
+			for (size_t i = 0; i < paths.gl_pathc; i++) {
+				remove(paths.gl_pathv[i]);
+			}
 		}
+		globfree(&paths);
 	}
-	globfree(&paths);
 }

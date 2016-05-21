@@ -11,6 +11,7 @@ Irccli is a simple command line irc client written from scratch in C. It is curr
 Simply run `./configure` and then `make`.
 
 ## Todo
+- Add `/nick` command to change nickname
 - Add support for bold, underline, (colors?)
 - Use `<getopt.h>`
  - Add `-h` option to display usage
