@@ -52,7 +52,6 @@ int irc_receive(char *buffer, int R) {
 
 	int log = 0;
 	FILE *lp;
-	char lname[256];
 
 	char **h_output;
 	int hr;
@@ -121,10 +120,36 @@ int irc_receive(char *buffer, int R) {
 		////////  Special action messages  ////////
 		//         (different colors)
 		if (strcmp(type, "JOIN") == 0) {
-			if (!*dest) dest = msg; // Some servers use msg instead of dest
+			if (!*dest) {
+				dest = msg; // Some servers use msg instead of dest
+				print = 1;
+			}
 			if (strcmp(host, nick) == 0) {
-				printf("%s", xget("smcup")); // Switch to alternate screen buffer
+				// Switch to alternate screen buffer
+				galt()
+					? printf("%s%s", xget("rmcup"), xget("smcup"))
+					: printf("%s",   xget("smcup"));
+				fflush(stdout);
 				alt(1);
+
+				// Check if previous log exists
+				char *lname = malloc(256); // Filenames can only be 255 chars
+				setup_log(&lname, 256, dest);
+				// If log exists, print to screen
+				if (access(lname, F_OK) != -1) {
+					lp = fopen(lname, "rb+");
+					if (!lp)
+						error("Error opening file for reading");
+
+					// Print log file
+					int c;
+					while ((c = getc(lp)) != EOF)
+						putchar(c);
+
+					fclose(lp);
+				}
+				free(lname);
+
 				snprintf(temp, sizeof(temp), "Now talking on %s", dest);
 
 				// Set current channel
@@ -147,7 +172,10 @@ int irc_receive(char *buffer, int R) {
 			color = "green";
 		}
 		else if (strcmp(type, "PART") == 0) {
-			if (!*dest) dest = msg; // Some servers use msg instead of dest
+			if (!*dest) {
+				dest = msg; // Some servers use msg instead of dest
+				print = 1;
+			}
 			if (strcmp(host, nick) == 0) {
 				snprintf(temp, sizeof(temp), "Left channel %s", dest);
 				if (strcmp(dest, current_channel) == 0)
@@ -167,6 +195,7 @@ int irc_receive(char *buffer, int R) {
 				channels = realloc(channels, --csize * sizeof(char *));
 
 				printf("%s", xget("rmcup")); // Switch back to normal screen
+				fflush(stdout);
 				alt(0);
 			}
 			else {
@@ -281,12 +310,10 @@ int irc_receive(char *buffer, int R) {
 
 		////////  Log setup  ////////
 		if (log) {
-			int thsize = sizeof(server) + strlen(dest) + 2; // 1 for ':' and 1 for '\0'
-			char tohash[thsize];
-			snprintf(tohash, thsize, "%s:%s", server, dest);
-			uint32_t hash = murmur3_32(tohash, thsize, 0x1337);
-			snprintf(lname, sizeof(lname), ".IRC_%u.log", hash);
+			char *lname = malloc(256); // Filenames can only be 255 chars
+			setup_log(&lname, 256, dest);
 			lp = fopen(lname, "ab+");
+			free(lname);
 			if (!lp)
 				error("Error opening file for writing");
 		}
@@ -296,7 +323,7 @@ int irc_receive(char *buffer, int R) {
 
 		////////  Printing & logging  ////////
 		time_t rawtime;
-		struct tm * timeinfo;
+		struct tm *timeinfo;
 
 		time(&rawtime);
 		timeinfo = localtime(&rawtime);
@@ -577,20 +604,17 @@ Shortcuts:\n\
 					galt()
 						? printf("%s%s", xget("rmcup"), xget("smcup"))
 						: printf("%s",   xget("smcup"));
+					fflush(stdout);
 					alt(1);
 
 					memset(current_channel, 0, sizeof(current_channel));
 					strncpy(current_channel, dest, sizeof(current_channel));
 
 					FILE *lp;
-					char lname[256];
-
-					int thsize = sizeof(server) + strlen(dest) + 2; // 1 for ':' and 1 for '\0'
-					char tohash[thsize];
-					snprintf(tohash, thsize, "%s:%s", server, dest);
-					uint32_t hash = murmur3_32(tohash, thsize, 0x1337);
-					snprintf(lname, sizeof(lname), ".IRC_%u.log", hash);
+					char *lname = malloc(256); // Filenames can only be 255 chars
+					setup_log(&lname, 256, dest);
 					lp = fopen(lname, "rb+");
+					free(lname);
 					if (!lp)
 						error("Error opening file for reading");
 
@@ -638,13 +662,43 @@ void irc_clean() {
 		free(channels[i]);
 
 	// Delete logs
-	if (!keep_logs) {
-		glob_t paths;
-		if (glob(".IRC_*.log", GLOB_NOSORT, NULL, &paths) == 0) {
-			for (size_t i = 0; i < paths.gl_pathc; i++) {
-				remove(paths.gl_pathv[i]);
+	glob_t paths;
+	if (glob(".IRC_*.log", GLOB_NOSORT, NULL, &paths) == 0) {
+		char *lname;
+		// Loop through each file matching pattern
+		for (size_t i = 0; i < paths.gl_pathc; i++) {
+			lname = paths.gl_pathv[i];
+			// Remove logs
+			if (!keep_logs) {
+				remove(lname);
+			}
+			else {
+				FILE *lp;
+				lp = fopen(lname, "ab+");
+				if (!lp)
+					error("Error opening file for writing");
+
+				// Write date stamp to log for future reading
+				time_t rawtime;
+				struct tm *timeinfo;
+
+				time(&rawtime);
+				timeinfo = localtime(&rawtime);
+				// Write previous log
+				fprintf(lp, "-------- PREVIOUS LOG [%02d/%02d] --------\n",
+					timeinfo->tm_mon+1, // Counts months from January, so +1
+					timeinfo->tm_mday);
+				fclose(lp);
 			}
 		}
 		globfree(&paths);
 	}
+}
+
+void setup_log(char **lname, int lsize, char *dest) {
+	int thsize = sizeof(server) + strlen(dest) + 2; // 1 for ':' and 1 for '\0'
+	char tohash[thsize];
+	snprintf(tohash, thsize, "%s:%s", server, dest);
+	uint32_t hash = murmur3_32(tohash, thsize, 0x1337);
+	snprintf(*lname, lsize, ".IRC_%u.log", hash);
 }

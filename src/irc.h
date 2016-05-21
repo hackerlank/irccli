@@ -22,4 +22,6 @@ int irc_send(char *buffer);
 
 void irc_clean();
 
+void setup_log(char **lname, int lsize, char *dest);
+
 #endif
