@@ -48,7 +48,7 @@ int irc_receive(char *buffer, int R) {
 
 	char **h_output;
 	int hr;
-	char *hostmask = "";
+	char *host = "";
 	char *hostname  = "";
 	char temp[1024];
 
@@ -74,8 +74,8 @@ int irc_receive(char *buffer, int R) {
 
 		hr = re_match(prefix, "^([^!]+)!(.+)$", &h_output, 0);
 		if (hr == 3) {
-			hostmask = h_output[1];
-			hostname  = h_output[2];
+			host     = h_output[1];
+			hostname = h_output[2];
 		}
 
 		// Check if type is a number
@@ -114,7 +114,7 @@ int irc_receive(char *buffer, int R) {
 		//         (different colors)
 		if (strcmp(type, "JOIN") == 0) {
 			if (!*dest) dest = msg; // Some servers use msg instead of dest
-			if (strcmp(hostmask, nick) == 0) {
+			if (strcmp(host, nick) == 0) {
 				printf("%s", xget("smcup")); // Switch to alternate screen buffer
 				alt(1);
 				snprintf(temp, sizeof(temp), "Now talking on %s", dest);
@@ -133,14 +133,14 @@ int irc_receive(char *buffer, int R) {
 				memcpy(channels[csize-1], destcpy, sizeof(destcpy));
 			}
 			else
-				snprintf(temp, sizeof(temp), "%s [%s] has joined %s", hostmask, hostname, dest);
+				snprintf(temp, sizeof(temp), "%s [%s] has joined %s", host, hostname, dest);
 			msg = temp;
 			log = 1;
 			color = "green";
 		}
 		else if (strcmp(type, "PART") == 0) {
 			if (!*dest) dest = msg; // Some servers use msg instead of dest
-			if (strcmp(hostmask, nick) == 0) {
+			if (strcmp(host, nick) == 0) {
 				snprintf(temp, sizeof(temp), "Left channel %s", dest);
 				if (strcmp(dest, current_channel) == 0)
 					memset(current_channel, 0, sizeof(current_channel));
@@ -162,7 +162,7 @@ int irc_receive(char *buffer, int R) {
 				alt(0);
 			}
 			else {
-				snprintf(temp, sizeof(temp), "%s [%s] has left %s", hostmask, hostname, dest);
+				snprintf(temp, sizeof(temp), "%s [%s] has left %s", host, hostname, dest);
 			}
 
 			msg = temp;
@@ -181,7 +181,7 @@ int irc_receive(char *buffer, int R) {
 				// // // // // // // // // //
 				// // // // // // // // // //
 				// Handle later when fully implement `/msg`
-				// If hostmask is in the list of users, it's a privmsg, start new "channel" for
+				// If host is in the list of users, it's a privmsg, start new "channel" for
 				//     privmsg with user
 				// Might not be in list of users: e.g., py-ctcp!ctcp@ctcp-scanner.rizon.net
 				// Special cases for nickserv and chanserv??
@@ -191,27 +191,27 @@ int irc_receive(char *buffer, int R) {
 			else {
 				// Someone is talking about user
 				if (strstr(msg, nick) != NULL)
-					hostmask = scolor(hostmask, "red");
+					host = scolor(host, "red");
 
 				//// Display action messages
 				_r = re_match(msg, "^\1ACTION (.+)\1$", &_output, 0);
 				if (_r == 2) {
 					msg = _output[1];
-					snprintf(temp, sizeof(temp), "* %s %s", hostmask, msg);
+					snprintf(temp, sizeof(temp), "* %s %s", host, msg);
 				}
 				else {
-					snprintf(temp, sizeof(temp), "%s: %s", hostmask, msg);
+					snprintf(temp, sizeof(temp), "%s: %s", host, msg);
 				}
 
 				if (strstr(msg, nick) != NULL)
-					free(hostmask);
+					free(host);
 
 				log = 1;
 				msg = temp;
 			}
 		}
 		else if (strcmp(type, "QUIT") == 0) {
-			snprintf(temp, sizeof(temp), "%s [%s] has quit [%s]", hostmask, hostname, msg);
+			snprintf(temp, sizeof(temp), "%s [%s] has quit [%s]", host, hostname, msg);
 			msg = temp;
 			log = 1;
 			color = "yellow";
