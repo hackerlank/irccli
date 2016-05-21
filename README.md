@@ -12,8 +12,6 @@ Simply run `./configure` and then `make`.
 
 ## Todo
 - Add support for bold, underline, (colors?)
-- Add functionality for: if user enters command longer than buff can hold, split into several messages and send
- - Maybe `sleep(0.5)` between each send?
 - Use `<getopt.h>`
  - Add `-h` option to display usage
  - Add `-e` option for different encoding charsets

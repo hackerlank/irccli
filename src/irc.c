@@ -360,13 +360,37 @@ int irc_send(char *buffer) {
 	////////  No command, just send privmsg  ////////
 	if (buffer[0] != '/') {
 		if (*current_channel) {
-			snprintf(send, sizeof(send), "PRIVMSG %s :%s\r\n", current_channel, buffer);
-			write_socket(send);
-
-			// Print the message because the server doesn't send it back
+			// Split up long messages and send them in parts
+			// Determine the max size of each part
+			snprintf(send, sizeof(send), ": PRIVMSG %s :\r\n", current_channel);
+			int psize = sizeof(send) - ( strlen(send) + 32 ); // Extra padding for hostmask
 			memset(send, 0, sizeof(send));
-			snprintf(send, sizeof(send), ":%s!X PRIVMSG %s :%s\r\n", nick, current_channel, buffer);
-			irc_receive(send, 0);
+
+			char part[psize];
+			int len = 0;
+
+			while (*buffer) {
+				// If this is the second+ loop, pause between sending (avoid spamming server)
+				if (len) sleep(1);
+
+				// Copy part of the message
+				strncpy(part, buffer, psize);
+				part[psize] = 0;
+
+
+				// Send the message to current channel
+				snprintf(send, sizeof(send), "PRIVMSG %s :%s\r\n", current_channel, part);
+				write_socket(send);
+
+				// Print the message because the server doesn't send it back
+				memset(send, 0, sizeof(send));
+				snprintf(send, sizeof(send), ":%s!X PRIVMSG %s :%s\r\n", nick, current_channel, part);
+				irc_receive(send, 0);
+
+
+				len = strlen(buffer);
+				buffer += len > psize ? psize : len; // Advance the pointer
+			}
 		}
 		else {
 			printf("No channel joined. Try /join #<channel>\n");

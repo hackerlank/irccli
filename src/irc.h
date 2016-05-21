@@ -5,6 +5,7 @@
 #include <string.h>
 #include <time.h>
 
+#include <unistd.h>
 #include <glob.h>
 
 #include "util.h"
