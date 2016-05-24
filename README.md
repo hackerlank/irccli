@@ -13,10 +13,6 @@ Simply run `./configure` and then `make`.
 ## Todo
 - Add `/nick` command to change nickname
 - Add support for bold, underline, (colors?)
-- Use `<getopt.h>`
- - Add `-h` option to display usage
- - Add `-e` option for different encoding charsets
- - Add `-el` to list available encoding types
 - Add automatic Nickserv with specified password
 - Add `/channel` functionality that if no channel is specified, go to most recent channel
 - Remove the prompt input from being printed after hit enter
