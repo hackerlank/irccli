@@ -1,7 +1,7 @@
 #! /bin/bash
 
-# echo $'CC=gcc
-# CFLAGS=-c -Wall -Wextra -O3' > makefile
+echo $'CC=gcc
+CFLAGS=-c -Wall -Wextra -O3' > makefile
 
 # For debugging optimized code:
 ###############################
@@ -10,8 +10,8 @@
 
 # For general debugging (look at variable values):
 ###############################
-echo $'CC=gcc
-CFLAGS=-c -Wall -Wextra -g -O0' > makefile
+# echo $'CC=gcc
+# CFLAGS=-c -Wall -Wextra -g -O0' > makefile
 
 
 # echo "LDLIBS=-L/opt/local/lib -L/usr/local/lib -lpcre -lreadline -liconv" >> makefile
