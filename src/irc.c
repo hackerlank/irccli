@@ -696,7 +696,7 @@ void irc_clean() {
 }
 
 void setup_log(char **lname, int lsize, char *dest) {
-	int thsize = sizeof(server) + strlen(dest) + 2; // 1 for ':' and 1 for '\0'
+	int thsize = strlen(server) + strlen(dest) + 2; // 1 for ':' and 1 for '\0'
 	char tohash[thsize];
 	snprintf(tohash, thsize, "%s:%s", server, dest);
 	uint32_t hash = murmur3_32(tohash, thsize, 0x1337);
