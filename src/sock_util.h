@@ -14,7 +14,7 @@
 int getsockfd();
 
 int read_socket(char buffer[512]);
-void write_socket(char msg[512]);
+void write_socket(char *msg);
 void connect_socket(char *server_name, int portno);
 void close_socket();
 
