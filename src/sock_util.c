@@ -1,7 +1,6 @@
 #include "sock_util.h"
 
 static int sockfd;
-static const char *encoding = "";
 
 int getsockfd() {
 	return sockfd;
@@ -9,25 +8,13 @@ int getsockfd() {
 
 int read_socket(char buffer[512+1]) {
 	int n = read(sockfd, buffer, 512);
-
 	if (n < 0)
 		error("Error reading from socket");
-
 	return n;
 }
 
-void write_socket(char msg[512]) {
-	if (*encoding) {
-		////////  Convert from unicode to encoding  ////////
-		iconv_t cd = iconv_open(encoding, "UTF-8");
-		char buffer[512];
-		char *outptr = (char *) &buffer[0];
-		size_t insize  = 512;
-		size_t outsize = 512;
-		iconv(cd, &msg, &insize, &outptr, &outsize);
-		msg = buffer;
-	}
-
+void write_socket(char *msg) {
+	encode(&msg, 512);
 	int n = write(sockfd, msg, strlen(msg));
 	if (n < 0)
 		error("Error writing to socket");
@@ -95,10 +82,6 @@ void connect_socket(char *server_name, int portno) {
 		if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
 			error("Error connecting");
 	}
-}
-
-void encode_socket(const char *enc) {
-	encoding = enc;
 }
 
 void close_socket() {

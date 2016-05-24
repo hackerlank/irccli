@@ -11,15 +11,11 @@
 #include "xterm.h"
 #include "pcre_util.h"
 #include "sock_util.h"
+#include "encode.h"
 
-void irc_nick();
-void irc_user();
-
-void irc_init();
-int irc_parse(char src[512], char ***output);
-int irc_receive(char *buffer, int R);
-int irc_send(char *buffer);
-
+int  irc_init(char *serv, int log, char *nck, char *usr, char *rl);
+int  irc_receive(char *buffer, int R);
+int  irc_send(char *buffer);
 void irc_clean();
 
 void setup_log(char **lname, int lsize, char *dest);

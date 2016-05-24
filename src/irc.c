@@ -9,9 +9,9 @@ static const char *irc_regex = "^(?:[:](\\S+) )?(\\S+)(?: (?!:)(.+?))?(?: (?!:)(
 // of length up to 200 characters.
 // (https://tools.ietf.org/html/rfc1459#section-1.3)
 static char current_channel[256];
-static char nick[512];
-static char user[512];
-static char real[512];
+static char nick[16];
+static char user[16];
+static char real[16];
 
 // List of channels currently connected to
 static char **channels;
@@ -20,24 +20,36 @@ static int csize = 0; // Number of channels in channels array
 static char *server = "";
 static int keep_logs = 0;
 
-void irc_nick(char *_nick) {
-	strncpy(nick, _nick, sizeof(nick));
+int irc_init(char *serv, int log, char *nck, char *usr, char *rl) {
+	server    = serv;
+	keep_logs = log;
+
+	strncpy(nick, nck, sizeof(nick));
+	strncpy(user, usr, sizeof(user));
+	strncpy(real, rl,  sizeof(real));
+
+	if (strlen(nick) > 9) {
+		printf("Nickname cannot be longer than 9 characters\n");
+		return 0;
+	}
+	if (strlen(user) > 9) {
+		printf("Username cannot be longer than 9 characters\n");
+		return 0;
+	}
+	if (strlen(real) > 9) {
+		printf("Real name cannot be longer than 9 characters\n");
+		return 0;
+	}
+
 	char nick_msg[512];
 	snprintf(nick_msg, sizeof(nick_msg), "NICK %s\r\n", nick);
 	write_socket(nick_msg);
-}
 
-void irc_user(char *_user, char *_real) {
-	strncpy(user, _user, sizeof(user));
-	strncpy(real, _real, sizeof(real));
 	char user_msg[512];
 	snprintf(user_msg, sizeof(user_msg), "USER %s 0 * :%s\r\n", user, real);
 	write_socket(user_msg);
-}
 
-void irc_init(char *_server, int log) {
-	server    = _server;
-	keep_logs = log;
+	return 1;
 }
 
 int irc_receive(char *buffer, int R) {

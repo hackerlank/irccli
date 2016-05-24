@@ -25,7 +25,7 @@ echo "LDFLAGS=-I/opt/local/include" >> makefile
 
 
 echo $'EXECUTABLE=irc
-SOURCES=main.c irc.c sock_util.c pcre_util.c util.c xterm.c
+SOURCES=main.c irc.c sock_util.c pcre_util.c util.c xterm.c encode.c
 OBJECTS=$(SOURCES:.c=.o)
 VPATH=src
 all: $(SOURCES) $(EXECUTABLE)

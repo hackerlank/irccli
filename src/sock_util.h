@@ -7,16 +7,15 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netdb.h>
-#include <iconv.h>
 
 #include "util.h"
+#include "encode.h"
 
 int getsockfd();
 
 int read_socket(char buffer[512]);
 void write_socket(char msg[512]);
 void connect_socket(char *server_name, int portno);
-void encode_socket(const char *enc);
 void close_socket();
 
 #endif

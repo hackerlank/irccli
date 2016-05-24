@@ -7,16 +7,15 @@
 #include <errno.h>
 #include <readline/readline.h>
 #include <readline/history.h>
-#include <iconv.h>
 #include <getopt.h>
 
 #include "util.h"
 #include "xterm.h"
 #include "sock_util.h"
 #include "irc.h"
+#include "encode.h"
 
 static int loop = 1;
-static const char *encoding = "";
 
 void handle_line(char *line) {
 	// Quit the program
@@ -45,62 +44,6 @@ Options:\n\
 
 	int keep_logs = 0;
 
-	char encodings[2048];
-	snprintf(encodings, sizeof(encodings), "\
-Available encodings:\n\
-\n\
-European languages\n\
-       ASCII,  ISO-8859-{1,2,3,4,5,7,9,10,13,14,15,16},  KOI8-R, KOI8-U, KOI8-RU,\n\
-       CP{1250,1251,1252,1253,1254,1257}, CP{850,866,1131}, Mac{Roman,CentralEurope,\n\
-       Iceland,Croatian,Romania}, Mac{Cyrillic,Ukraine,Greek,Turkish}, Macintosh\n\
-\n\
-Semitic languages\n\
-       ISO-8859-{6,8}, CP{1255,1256}, CP862, Mac{Hebrew,Arabic}\n\
-\n\
-Japanese\n\
-       EUC-JP, SHIFT_JIS, CP932, ISO-2022-JP, ISO-2022-JP-2, ISO-2022-JP-1\n\
-\n\
-Chinese\n\
-       EUC-CN, HZ, GBK, CP936, GB18030, EUC-TW, BIG5, CP950, BIG5-HKSCS,\n\
-       BIG5-HKSCS:2004, BIG5-HKSCS:2001, BIG5-HKSCS:1999, ISO-2022-CN, ISO-2022-CN-EXT\n\
-\n\
-Korean\n\
-       EUC-KR, CP949, ISO-2022-KR, JOHAB\n\
-\n\
-Armenian\n\
-       ARMSCII-8\n\
-\n\
-Georgian\n\
-       Georgian-Academy, Georgian-PS\n\
-\n\
-Tajik\n\
-       KOI8-T\n\
-\n\
-Kazakh\n\
-       PT154, RK1048\n\
-\n\
-Thai\n\
-       TIS-620, CP874, MacThai\n\
-\n\
-Laotian\n\
-       MuleLao-1, CP1133\n\
-\n\
-Vietnamese\n\
-       VISCII, TCVN, CP1258\n\
-\n\
-Platform specifics\n\
-       HP-ROMAN8, NEXTSTEP\n\
-\n\
-Full Unicode\n\
-       UTF-8\n\
-       UCS-2, UCS-2BE, UCS-2LE\n\
-       UCS-4, UCS-4BE, UCS-4LE\n\
-       UTF-16, UTF-16BE, UTF-16LE\n\
-       UTF-32, UTF-32BE, UTF-32LE\n\
-       UTF-7\n\
-       C99, JAVA\
-");
-
 	int c;
 	while (1) {
 		static struct option long_options[] = {
@@ -127,17 +70,19 @@ Full Unicode\n\
 				keep_logs = 1;
 				break;
 			case 'e': {
-				char optargcpy[sizeof(optarg)];
-				strncpy(optargcpy, optarg, sizeof(optargcpy));
+				int osize = sizeof(optarg);
+				char optargcpy[osize+1];
+				strncpy(optargcpy, optarg, osize);
+				optargcpy[osize] = 0;
 				for (int i = 0; optargcpy[i]; i++)
 					optargcpy[i] = tolower(optargcpy[i]);
 				// Check if user typed "help"
 				if (strcmp(optargcpy, "help") == 0) {
-					printf("%s\n", encodings);
+					printf("%s\n", genc());
 					return 0;
 				}
 
-				encoding = optarg;
+				enc(optarg);
 				break;
 			}
 			default:
@@ -215,18 +160,16 @@ Full Unicode\n\
 
 	// Connect to the server
 	connect_socket(serv_port[0], portno);
-	// Setup encoding for writing to socket
-	encode_socket(encoding);
 
-	// Initialize irc
-	irc_init(serv_port[0], keep_logs);
-	// Communicate with the irc server
 	if (!*user)
 		user = nick;
 	if (!*real)
 		real = nick;
-	irc_nick(nick);
-	irc_user(user, real);
+	// Initialize irc (communicate with the irc server)
+	if (!irc_init(serv_port[0], keep_logs, nick, user, real)) {
+		free(serv_port); // Free serv_port
+		return 0;
+	}
 
 	// Free serv_port
 	free(serv_port);
@@ -300,20 +243,7 @@ Full Unicode\n\
 				// Handle each line
 				while ( (token = strsep(&buffsave, "\n")) ) {
 					if (*token) {
-						if (*encoding) {
-							////////  Convert to unicode from encoding  ////////
-							iconv_t cd = iconv_open("UTF-8", encoding);
-							char tokencpy[512];
-							char otoken[512];
-							strncpy(tokencpy, token, 512);
-							char *inptr  = (char *) &tokencpy[0];
-							char *outptr = (char *) &otoken[0];
-							size_t insize  = 512;
-							size_t outsize = 512;
-							iconv(cd, &inptr, &insize, &outptr, &outsize);
-							token = otoken;
-						}
-
+						unencode(&token, 512);
 						if (!irc_receive(token, 1)) {
 							loop = 0;
 							break;
@@ -332,20 +262,7 @@ Full Unicode\n\
 				strncpy(buffcpy, buffer, 512+1);
 				while ( (token = strsep(&buffcpy, "\n")) ) {
 					if (*token) {
-						if (*encoding) {
-							////////  Convert to unicode from encoding  ////////
-							iconv_t cd = iconv_open("UTF-8", encoding);
-							char tokencpy[512];
-							char otoken[512];
-							strncpy(tokencpy, token, 512);
-							char *inptr  = (char *) &tokencpy[0];
-							char *outptr = (char *) &otoken[0];
-							size_t insize  = 512;
-							size_t outsize = 512;
-							iconv(cd, &inptr, &insize, &outptr, &outsize);
-							token = otoken;
-						}
-
+						unencode(&token, 512);
 						if (!irc_receive(token, 1)) {
 							loop = 0;
 							break;
