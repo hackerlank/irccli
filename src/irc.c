@@ -132,10 +132,7 @@ int irc_receive(char *buffer, int R) {
 		////////  Special action messages  ////////
 		//         (different colors)
 		if (strcmp(type, "JOIN") == 0) {
-			if (!*dest) {
-				dest = msg; // Some servers use msg instead of dest
-				print = 1;
-			}
+			if (!*dest) dest = msg; // Some servers use msg instead of dest
 			if (strcmp(host, nick) == 0) {
 				// Switch to alternate screen buffer
 				galt()
@@ -180,14 +177,12 @@ int irc_receive(char *buffer, int R) {
 			else
 				snprintf(temp, sizeof(temp), "%s [%s] has joined %s", host, hostname, dest);
 			msg = temp;
+			print = 1;
 			log = 1;
 			color = "green";
 		}
 		else if (strcmp(type, "PART") == 0) {
-			if (!*dest) {
-				dest = msg; // Some servers use msg instead of dest
-				print = 1;
-			}
+			if (!*dest) dest = msg; // Some servers use msg instead of dest
 			if (strcmp(host, nick) == 0) {
 				snprintf(temp, sizeof(temp), "Left channel %s", dest);
 				if (strcmp(dest, current_channel) == 0)
@@ -215,6 +210,7 @@ int irc_receive(char *buffer, int R) {
 			}
 
 			msg = temp;
+			print = 1;
 			log = 1;
 			color = "yellow";
 		}
