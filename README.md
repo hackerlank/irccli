@@ -5,14 +5,14 @@ A minimal command line IRC client
 
 Irccli is a simple command line irc client written from scratch in C. It is currently still in development.
 
-## Screenshots
-![image](http://i.imgur.com/HQVDUHd.png)
-![image](http://i.imgur.com/yKEYP6R.gif)
-
 ## Compile
 > _Note: Must have [pcre](http://www.pcre.org/) and [readline](https://cnswww.cns.cwru.edu/php/chet/readline/rltop.html) installed to compile correctly_
 
 `./configure && make`
+
+## Screenshots
+![image](http://i.imgur.com/HQVDUHd.png)
+![image](http://i.imgur.com/yKEYP6R.gif)
 
 ## Todo
 - [ ] Add `/nick` command to change nickname
